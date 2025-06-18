@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test:db": "node scripts/test-database.js",
     "migrate": "node scripts/run-migration.js",
-    "migrate:notifications": "echo 'Please run the SQL in supabase/migrations/020_admin_notifications.sql in your Supabase dashboard'"
+    "migrate:notifications": "echo 'Please run the SQL in supabase/migrations/020_admin_notifications.sql in your Supabase dashboard'",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -26,7 +27,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
-    "@supabase/supabase-js": "^2.50.0",
+    "@supabase/supabase-js": "^2.39.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

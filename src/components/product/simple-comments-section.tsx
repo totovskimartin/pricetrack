@@ -79,7 +79,7 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
       }
 
       if (data) {
-        const commentsData = data.map(comment => ({
+        const commentsData = data.map((comment: any) => ({
           ...comment,
           user: comment.users
         }))
@@ -154,7 +154,7 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
 
       const newCommentData = {
         ...data,
-        user: data.users
+        user: (data as any).users
       }
 
       setComments(prev => {

@@ -27,10 +27,10 @@ interface UserProfile {
   id: string
   email: string
   username: string
-  full_name?: string
-  first_name?: string
-  last_name?: string
-  avatar_url?: string
+  full_name?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  avatar_url?: string | null
   role: string
   is_active: boolean
   created_at: string

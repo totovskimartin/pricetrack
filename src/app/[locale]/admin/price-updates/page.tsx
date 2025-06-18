@@ -157,7 +157,7 @@ export default function PriceUpdatesPage() {
       }
 
       // Check for price changes and send notifications
-      await checkAndSendNotifications(selectedProduct, newPrices, currentPrices)
+      await checkAndSendNotifications(selectedProduct, newPrices, currentPrices || [])
 
       setSuccessMessage(`Успешно добавени ${newPrices.length} нови цени за ${selectedProduct.name}`)
       setPriceUpdates([])
@@ -177,13 +177,13 @@ export default function PriceUpdatesPage() {
     currentPrices: any[]
   ) => {
     try {
-      // Get users tracking this product
+      // Get users tracking this product with their emails
       const { data: trackingUsers } = await supabase
         .from('user_tracking')
         .select(`
           user_id,
           target_price_bgn,
-          users:user_id (email)
+          users!inner(email)
         `)
         .eq('product_id', product.id)
         .eq('is_active', true)
@@ -202,10 +202,13 @@ export default function PriceUpdatesPage() {
             // Significant price drop (more than 10%)
             (currentPrice && ((currentPrice.price_bgn - newPrice.price_bgn) / currentPrice.price_bgn) > 0.1)
 
-          if (shouldNotify && tracking.users?.email) {
+          // Extract email from the users array (Supabase returns joined tables as arrays)
+          const userEmail = tracking.users?.[0]?.email
+
+          if (shouldNotify && userEmail) {
             await emailService.sendPriceDropNotification({
               userId: tracking.user_id,
-              userEmail: tracking.users.email,
+              userEmail: userEmail,
               productId: product.id,
               productName: product.name,
               oldPrice: currentPrice?.price_bgn || newPrice.price_bgn,

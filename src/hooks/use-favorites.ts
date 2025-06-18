@@ -50,7 +50,7 @@ export function useFavorites() {
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any
 
       if (!error && data) {
-        const favoriteIds = data.map(fav => fav.product_id)
+        const favoriteIds = data.map((fav: any) => fav.product_id)
         setFavorites(favoriteIds)
       } else {
         // Fallback to localStorage if database isn't set up yet
@@ -115,8 +115,8 @@ export function useFavorites() {
       }
 
       // Combine products with their latest prices
-      const productsWithPrices: FavoriteProduct[] = productsData.map(product => {
-        const latestPrice = pricesData?.find(price => price.product_id === product.id)
+      const productsWithPrices: FavoriteProduct[] = productsData.map((product: any) => {
+        const latestPrice = pricesData?.find((price: any) => price.product_id === product.id)
 
         return {
           ...product,

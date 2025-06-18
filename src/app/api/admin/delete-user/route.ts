@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseAdminClient } from '@/lib/supabase-server'
 import { logAdminAction } from '@/lib/admin'
-
-// Create admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
 
 export async function DELETE(request: NextRequest) {
   try {
     const { userId, adminId, userDetails } = await request.json()
+    const supabaseAdmin = createServerSupabaseAdminClient()
 
     console.log('Delete user request:', { userId, adminId })
 

@@ -179,7 +179,7 @@ export default function ProductsPage() {
 
         return {
           ...product,
-          price_entries: productPrices.map(price => ({
+          price_entries: productPrices.map((price: any) => ({
             id: price.id,
             price: price.price_bgn,
             currency: 'BGN' as const,

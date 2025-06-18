@@ -192,7 +192,7 @@ export async function generatePriceAlerts(
   const priceChangePercent = oldPrice > 0 ? ((priceChange / oldPrice) * 100) : 0
 
   // Determine alert type
-  let alertType: 'price_drop' | 'target_reached' | 'significant_change'
+  let alertType: 'price_drop' | 'significant_change'
   
   if (Math.abs(priceChangePercent) >= 10) {
     alertType = 'significant_change'
@@ -215,7 +215,7 @@ export async function generatePriceAlerts(
 
   // Create alerts for each tracking user
   const alerts = trackingUsers.map(tracking => {
-    let finalAlertType = alertType
+    let finalAlertType: 'price_drop' | 'target_reached' | 'significant_change' = alertType
     
     // Check if target price alert should be generated
     if (tracking.target_price_bgn && newPrice <= tracking.target_price_bgn) {

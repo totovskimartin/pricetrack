@@ -67,7 +67,7 @@ interface NewsItem {
 export default function NewsManagement() {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const { ConfirmationComponent, showConfirmation } = useConfirmation()
+  const { ConfirmationComponent, confirm } = useConfirmation()
 
   const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,13 +158,15 @@ export default function NewsManagement() {
 
         showToast('Новината е обновена успешно', 'success')
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('news')
           .insert([newsData])
+          .select('id')
+          .single()
 
         if (error) throw error
 
-        await logAdminAction(user?.id || '', 'create', 'news', null, {
+        await logAdminAction(user?.id || '', 'create', 'news', data?.id || 'unknown', {
           title: formData.title
         })
 
@@ -197,33 +199,35 @@ export default function NewsManagement() {
   }
 
   const handleDelete = async (newsItem: NewsItem) => {
-    const confirmed = await showConfirmation({
-      title: 'Изтриване на новина',
-      message: `Сигурни ли сте, че искате да изтриете новината "${newsItem.title}"?`,
-      confirmText: 'Изтрий',
-      cancelText: 'Отказ'
-    })
+    confirm(
+      'Изтриване на новина',
+      `Сигурни ли сте, че искате да изтриете новината "${newsItem.title}"?`,
+      async () => {
+        try {
+          const { error } = await supabase
+            .from('news')
+            .delete()
+            .eq('id', newsItem.id)
 
-    if (!confirmed) return
+          if (error) throw error
 
-    try {
-      const { error } = await supabase
-        .from('news')
-        .delete()
-        .eq('id', newsItem.id)
+          await logAdminAction(user?.id || '', 'delete', 'news', newsItem.id, {
+            title: newsItem.title
+          })
 
-      if (error) throw error
-
-      await logAdminAction(user?.id || '', 'delete', 'news', newsItem.id, {
-        title: newsItem.title
-      })
-
-      showToast('Новината е изтрита успешно', 'success')
-      fetchNews()
-    } catch (error) {
-      console.error('Error deleting news:', error)
-      showToast('Грешка при изтриване на новината', 'error')
-    }
+          showToast('Новината е изтрита успешно', 'success')
+          fetchNews()
+        } catch (error) {
+          console.error('Error deleting news:', error)
+          showToast('Грешка при изтриване на новината', 'error')
+        }
+      },
+      {
+        confirmText: 'Изтрий',
+        cancelText: 'Отказ',
+        type: 'error'
+      }
+    )
   }
 
   const toggleStatus = async (newsItem: NewsItem) => {

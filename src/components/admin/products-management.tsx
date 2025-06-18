@@ -42,8 +42,11 @@ import {
 interface Product {
   id: string
   name: string
+  slug: string
   description?: string
   category?: string
+  brand?: string
+  image_url?: string
   is_approved: boolean
   created_at: string
   created_by?: string
@@ -54,6 +57,14 @@ interface Product {
   supermarket?: {
     id: string
     name: string
+  }
+  latest_price?: {
+    price_bgn: number
+    price_eur: number | null
+    created_at: string
+    supermarkets?: {
+      name: string
+    }
   }
 }
 

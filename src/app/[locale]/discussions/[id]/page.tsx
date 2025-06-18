@@ -378,7 +378,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
   }
 
   const fetchUserLikes = async () => {
-    if (!user) return
+    if (!user || !discussionId) return
 
     try {
       // Fetch discussion likes
@@ -389,7 +389,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
         .eq('discussion_id', discussionId)
 
       if (discussionLikes && discussionLikes.length > 0) {
-        setUserLikes(new Set([discussionId]))
+        setUserLikes(new Set([discussionId as string]))
       }
 
       // Fetch comment likes

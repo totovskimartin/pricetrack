@@ -63,7 +63,7 @@ export const cacheManager = {
         resolve(event.data.success)
       }
 
-      navigator.serviceWorker.controller.postMessage(
+      navigator.serviceWorker.controller!.postMessage(
         { type: 'CLEAR_CACHE', payload: { pattern } },
         [messageChannel.port2]
       )
@@ -82,7 +82,7 @@ export const cacheManager = {
         resolve(event.data.size || 0)
       }
 
-      navigator.serviceWorker.controller.postMessage(
+      navigator.serviceWorker.controller!.postMessage(
         { type: 'GET_CACHE_SIZE' },
         [messageChannel.port2]
       )

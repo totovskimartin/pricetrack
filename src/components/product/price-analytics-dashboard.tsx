@@ -85,7 +85,7 @@ export function PriceAnalyticsDashboard({ product }: PriceAnalyticsDashboardProp
         .limit(10)
 
       if (!error && data) {
-        setAlerts(data.map(alert => ({
+        setAlerts(data.map((alert: any) => ({
           ...alert,
           supermarket: alert.supermarkets
         })))

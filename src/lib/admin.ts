@@ -1,5 +1,5 @@
 import { UserRole, User, AdminLog } from './types'
-import { createSupabaseAdminClient } from './supabase'
+import { createServerSupabaseAdminClient } from './supabase-server'
 
 /**
  * Check if user has admin privileges
@@ -57,8 +57,12 @@ export function canManageSupermarkets(user: User | null): boolean {
 /**
  * Check if user can access admin panel
  */
-export function canAccessAdminPanel(user: User | null): boolean {
-  return isModerator(user)
+export const canAccessAdminPanel = (user: any): boolean => {
+  if (!user) return false
+  
+  // Check if the user has an admin role
+  const role = user.role
+  return ['moderator', 'admin', 'super_admin'].includes(role)
 }
 
 /**
@@ -110,22 +114,30 @@ export async function logAdminAction(
   action: string,
   targetType: string,
   targetId: string,
-  details?: any
-): Promise<void> {
+  details: any = {}
+) {
   try {
-    const supabase = createSupabaseAdminClient()
+    const supabaseAdmin = createServerSupabaseAdminClient()
     
-    await supabase
+    const { error } = await supabaseAdmin
       .from('admin_logs')
       .insert({
         admin_id: adminId,
         action,
         target_type: targetType,
         target_id: targetId,
-        details: details || null
+        details
       })
+
+    if (error) {
+      console.error('Error logging admin action:', error)
+      throw error
+    }
+
+    return true
   } catch (error) {
     console.error('Failed to log admin action:', error)
+    throw error
   }
 }
 

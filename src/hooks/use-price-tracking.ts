@@ -61,7 +61,7 @@ export function usePriceTracking() {
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any
 
       if (!error && data) {
-        const productIds = data.map(track => track.product_id)
+        const productIds = data.map((track: any) => track.product_id)
         setTrackingIds(productIds)
 
         // Fetch full tracking data with product details (non-blocking)
@@ -89,7 +89,7 @@ export function usePriceTracking() {
 
     setLoading(true)
     try {
-      const productIds = trackingData.map(t => t.product_id)
+      const productIds = trackingData.map((t: any) => t.product_id)
 
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
@@ -121,9 +121,9 @@ export function usePriceTracking() {
       const { data: pricesData } = pricesResult
 
       // Combine tracking data with product and price info
-      const trackedWithDetails: TrackedProduct[] = trackingData.map(tracking => {
-        const product = productsData?.find(p => p.id === tracking.product_id)
-        const latestPrice = pricesData?.find(price => price.product_id === tracking.product_id)
+      const trackedWithDetails: TrackedProduct[] = trackingData.map((tracking: any) => {
+        const product = productsData?.find((p: any) => p.id === tracking.product_id)
+        const latestPrice = pricesData?.find((price: any) => price.product_id === tracking.product_id)
 
         return {
           ...tracking,

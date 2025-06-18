@@ -80,7 +80,7 @@ export function RelatedProducts({ currentProduct }: RelatedProductsProps) {
 
       // Combine products with their latest prices
       const productsWithPrices = products.map(product => {
-        const latestPrice = prices?.find(price => price.product_id === product.id)
+        const latestPrice = prices?.find(price => price.product_id === product.id) as any
         return {
           ...product,
           latest_price: latestPrice ? {

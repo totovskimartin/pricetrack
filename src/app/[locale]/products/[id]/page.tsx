@@ -103,6 +103,7 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (params.id) {
+      const productId = Array.isArray(params.id) ? params.id[0] : params.id
       fetchProduct()
       fetchCommentCount() // Fetch comment count immediately on page load
       if (user) {
@@ -116,14 +117,17 @@ export default function ProductDetailPage() {
   // Update user product when favorites change
   useEffect(() => {
     if (user && params.id) {
-      const currentFavoriteStatus = isFavorite(params.id)
-      setUserProduct(prev => ({
-        id: prev?.id || `local_${params.id}`,
-        is_tracking: prev?.is_tracking || false,
-        is_favorite: currentFavoriteStatus
-      }))
+      const productId = Array.isArray(params.id) ? params.id[0] : params.id
+      if (productId) {
+        const currentFavoriteStatus = isFavorite(productId)
+        setUserProduct(prev => ({
+          id: prev?.id || `local_${productId}`,
+          is_tracking: prev?.is_tracking || false,
+          is_favorite: currentFavoriteStatus
+        }))
+      }
     }
-  }, [isFavorite(params.id), user, params.id])
+  }, [user, params.id, isFavorite])
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -136,9 +140,14 @@ export default function ProductDetailPage() {
   }, [successMessage])
 
   const fetchProduct = async () => {
+    if (!params.id) return
+
     try {
       // Use the new slug-based lookup
-      const productData = await findProductBySlugOrId(params.id, supabase)
+      const productId = Array.isArray(params.id) ? params.id[0] : params.id
+      if (!productId) return
+
+      const productData = await findProductBySlugOrId(productId, supabase)
 
       if (!productData) {
         setProduct(null)
@@ -186,7 +195,18 @@ export default function ProductDetailPage() {
       // Transform the data to match our expected format
       const transformedProduct = {
         ...data,
-        price_entries: data.prices?.map(price => ({
+        price_entries: data.prices?.map((price: {
+          id: string
+          price_bgn: number
+          price_eur: number | null
+          created_at: string
+          supermarket_id: string
+          supermarkets?: {
+            id: string
+            name: string
+            logo_url: string | null
+          } | null
+        }) => ({
           id: price.id,
           price: price.price_bgn,
           currency: 'BGN' as const,
@@ -209,17 +229,23 @@ export default function ProductDetailPage() {
   }
 
   const fetchUserProduct = async () => {
-    if (!user) {
+    if (!user || !params.id) {
       setUserProduct(null)
       return
     }
 
     try {
+      const productId = Array.isArray(params.id) ? params.id[0] : params.id
+      if (!productId) {
+        setUserProduct(null)
+        return
+      }
+
       // Use the favorites hook to check if product is favorited
       setUserProduct({
-        id: `local_${params.id}`,
+        id: `local_${productId}`,
         is_tracking: false, // We'll implement this later
-        is_favorite: isFavorite(params.id)
+        is_favorite: isFavorite(productId)
       })
     } catch (error) {
       // Handle error silently
@@ -378,14 +404,7 @@ export default function ProductDetailPage() {
     })
   }
 
-  const formatPrice = (price: number, currency: string) => {
-    if (currency === 'BGN') {
-      return `${price.toFixed(2)} лв.`
-    } else if (currency === 'EUR') {
-      return `€${price.toFixed(2)}`
-    }
-    return `${price.toFixed(2)} ${currency}`
-  }
+
 
   if (loading) {
     return (

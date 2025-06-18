@@ -66,8 +66,8 @@ export function PerformanceMonitor() {
 
     // Basic navigation timing
     if (navigation) {
-      const pageLoadTime = navigation.loadEventEnd - navigation.navigationStart
-      const domContentLoaded = navigation.domContentLoadedEventEnd - navigation.navigationStart
+      const pageLoadTime = navigation.loadEventEnd - navigation.startTime
+      const domContentLoaded = navigation.domContentLoadedEventEnd - navigation.startTime
 
       setMetrics(prev => ({
         ...prev,
