@@ -45,13 +45,6 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
-            <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-              <Link href="/bg/products">
-                <Button variant="outline" size="lg" className="w-full">
-                  Разгледайте продукти
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
 

@@ -1,5 +1,7 @@
 import { Inter } from "next/font/google";
 import { notFound } from 'next/navigation';
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { ToastProvider } from '@/components/providers/toast-provider';
 import { MainLayout } from '@/components/layout/main-layout';
@@ -39,6 +41,8 @@ export default async function LocaleLayout({
             <ServiceWorkerRegistration />
           </AuthProvider>
         </ToastProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
