@@ -83,15 +83,60 @@ export default function NotificationsPage() {
     if (!notification.is_read) {
       await markAsRead(notification.id)
     }
+
+    // Navigate to the related content
+    const link = getNotificationLink(notification)
+    if (link !== '#') {
+      window.location.href = link
+    }
   }
 
   const getNotificationLink = (notification: Notification) => {
+    // For comment-related notifications, navigate to the discussion with comment anchor
+    if (notification.type === 'comment_reply' || notification.type === 'comment_like') {
+      if (notification.discussion_id && notification.comment_id) {
+        return `/bg/discussions/${notification.discussion_id}#comment-${notification.comment_id}`
+      }
+      if (notification.discussion_id) {
+        return `/bg/discussions/${notification.discussion_id}`
+      }
+    }
+
+    // For discussion-related notifications
+    if (notification.type === 'discussion_reply' || notification.type === 'discussion_like') {
+      if (notification.discussion_id) {
+        return `/bg/discussions/${notification.discussion_id}`
+      }
+    }
+
+    // For price-related notifications
+    if (notification.type === 'price_drop' || notification.type === 'price_increase') {
+      if (notification.product_id) {
+        return `/bg/products/${notification.product_id}`
+      }
+    }
+
+    // For approval notifications
+    if (notification.type === 'product_approved' && notification.product_id) {
+      return `/bg/products/${notification.product_id}`
+    }
+
+    if (notification.type === 'discussion_approved' && notification.discussion_id) {
+      return `/bg/discussions/${notification.discussion_id}`
+    }
+
+    if (notification.type === 'comment_approved' && notification.discussion_id && notification.comment_id) {
+      return `/bg/discussions/${notification.discussion_id}#comment-${notification.comment_id}`
+    }
+
+    // Fallback to generic links
     if (notification.discussion_id) {
       return `/bg/discussions/${notification.discussion_id}`
     }
     if (notification.product_id) {
       return `/bg/products/${notification.product_id}`
     }
+
     return '#'
   }
 
@@ -179,55 +224,44 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         <div className="space-y-3">
-          {filteredNotifications.map((notification) => {
-            const link = getNotificationLink(notification)
-            const NotificationContent = (
-              <Card 
-                key={notification.id} 
-                className={`transition-colors hover:bg-gray-50 cursor-pointer ${
-                  notification.is_read ? 'bg-white' : 'bg-blue-50 border-blue-200'
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-3">
-                    {renderNotificationIcon(notification.type)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-medium text-gray-900 truncate">
-                          {notification.title}
-                        </h3>
-                        {!notification.is_read && (
-                          <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
-                        )}
-                      </div>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                        {notification.message}
+          {filteredNotifications.map((notification) => (
+            <Card
+              key={notification.id}
+              className={`transition-colors hover:bg-gray-50 cursor-pointer ${
+                notification.is_read ? 'bg-white' : 'bg-blue-50 border-blue-200'
+              }`}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  {renderNotificationIcon(notification.type)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {notification.title}
+                      </h3>
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                      )}
+                    </div>
+                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">
+                        {formatNotificationTime(notification.created_at)}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-500">
-                          {formatNotificationTime(notification.created_at)}
-                        </p>
-                        {(notification.product?.name || notification.discussion?.title) && (
-                          <Badge variant="outline" className="text-xs">
-                            {notification.product?.name || notification.discussion?.title}
-                          </Badge>
-                        )}
-                      </div>
+                      {(notification.product?.name || notification.discussion?.title) && (
+                        <Badge variant="outline" className="text-xs">
+                          {notification.product?.name || notification.discussion?.title}
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )
-
-            return link !== '#' ? (
-              <Link key={notification.id} href={link}>
-                {NotificationContent}
-              </Link>
-            ) : (
-              NotificationContent
-            )
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Load More */}

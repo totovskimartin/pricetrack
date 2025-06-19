@@ -204,7 +204,7 @@ export function PriceSuggestionModal({
             <div className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5 text-green-600" />
               <CardTitle className="text-lg">
-                Предложи цена
+                Добави цена
               </CardTitle>
             </div>
             <Button
@@ -217,7 +217,7 @@ export function PriceSuggestionModal({
             </Button>
           </div>
           <CardDescription>
-            Предложи нова цена за "{productName}"
+            Добави нова цена за "{productName}"
           </CardDescription>
         </CardHeader>
 
@@ -299,7 +299,7 @@ export function PriceSuggestionModal({
               {/* Price Input */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Предложена цена (лв.) *
+                  Цена (лв.) *
                 </label>
                 <Input
                   type="number"

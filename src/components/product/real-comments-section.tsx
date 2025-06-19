@@ -58,29 +58,26 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .from('product_comments')
         .select(`
           id,
-          title,
           content,
-          upvotes,
-          downvotes,
-          is_pinned,
+          likes,
+          dislikes,
           created_at,
           user_id,
           parent_comment_id
         `)
         .eq('product_id', productId)
         .is('parent_comment_id', null) // Only top-level comments
-        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
 
       if (!commentsError && commentsData) {
         // Transform comments to discussions format
         const transformedDiscussions = commentsData.map(comment => ({
           id: comment.id,
-          title: comment.title || comment.content.substring(0, 50) + (comment.content.length > 50 ? '...' : ''),
+          title: comment.content.substring(0, 50) + (comment.content.length > 50 ? '...' : ''),
           content: comment.content,
-          upvotes: comment.upvotes,
-          downvotes: comment.downvotes,
-          is_pinned: comment.is_pinned,
+          upvotes: comment.likes,
+          downvotes: comment.dislikes,
+          is_pinned: false, // Not supported in current schema
           created_at: comment.created_at,
           user_id: comment.user_id
         }))
@@ -164,8 +161,8 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .select(`
           id,
           content,
-          upvotes,
-          downvotes,
+          likes,
+          dislikes,
           created_at,
           user_id
         `)
@@ -173,9 +170,16 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .order('created_at', { ascending: true })
 
       if (!error && data) {
+        // Transform to match expected format
+        const transformedData = data.map(comment => ({
+          ...comment,
+          upvotes: comment.likes,
+          downvotes: comment.dislikes
+        }))
+
         setComments(prev => ({
           ...prev,
-          [commentId]: data
+          [commentId]: transformedData
         }))
       }
     } catch (error) {
@@ -193,13 +197,13 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .insert({
           product_id: productId,
           user_id: user.id,
-          content: newDiscussionContent.trim(),
-          title: newDiscussionTitle.trim() || newDiscussionContent.trim().substring(0, 50) + (newDiscussionContent.trim().length > 50 ? '...' : '')
+          content: newDiscussionContent.trim()
         })
         .select()
         .single()
 
       if (error) {
+        console.error('Error creating comment:', error)
         alert('Функцията за коментари ще бъде активирана скоро! Моля, изпълнете SQL скрипта в database/setup-user-interactions.sql')
         return
       }
@@ -209,9 +213,9 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         id: data.id,
         title: newDiscussionTitle.trim() || data.content.substring(0, 50) + (data.content.length > 50 ? '...' : ''),
         content: data.content,
-        upvotes: data.upvotes,
-        downvotes: data.downvotes,
-        is_pinned: data.is_pinned,
+        upvotes: data.likes || 0,
+        downvotes: data.dislikes || 0,
+        is_pinned: false,
         created_at: data.created_at,
         user_id: data.user_id
       }
@@ -221,6 +225,7 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
       setNewDiscussionContent('')
       setShowNewDiscussion(false)
     } catch (error) {
+      console.error('Error creating discussion:', error)
       alert('Възникна грешка при създаването на коментара')
     }
   }

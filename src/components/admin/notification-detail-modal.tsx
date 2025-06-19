@@ -228,12 +228,21 @@ export function NotificationDetailModal({
 
         <DialogFooter className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Link href={getNotificationUrl(notification)}>
-              <Button variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Отиди към секцията
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                // Mark as read if unread
+                if (!notification.is_read && onMarkAsRead) {
+                  await onMarkAsRead(notification.id)
+                }
+                // Navigate to the URL
+                window.location.href = getNotificationUrl(notification)
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Отиди към секцията
+            </Button>
           </div>
           <div className="flex items-center space-x-2">
             {!notification.is_read && (

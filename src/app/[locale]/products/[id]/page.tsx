@@ -98,14 +98,50 @@ export default function ProductDetailPage() {
   const [forceUpdate, setForceUpdate] = useState(0)
   const [showTargetPriceModal, setShowTargetPriceModal] = useState(false)
   const [showPriceSuggestionModal, setShowPriceSuggestionModal] = useState(false)
+
+  // Simple comment count state
   const [commentCount, setCommentCount] = useState(0)
   const [commentsTableExists, setCommentsTableExists] = useState(true)
+
+  // Get product ID
+  const productId = params.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null
+
+  // Fetch comment count on page load
+  useEffect(() => {
+    if (productId) {
+      fetchCommentCount()
+    }
+  }, [productId])
+
+  const fetchCommentCount = async () => {
+    if (!productId) return
+
+    try {
+      const { getProductCommentCount, checkCommentsTableExists } = await import('@/lib/comments')
+
+      // Check if table exists
+      const tableExists = await checkCommentsTableExists()
+      setCommentsTableExists(tableExists)
+
+      if (!tableExists) {
+        setCommentCount(0)
+        return
+      }
+
+      // Get comment count
+      const count = await getProductCommentCount(productId)
+      setCommentCount(count)
+    } catch (error) {
+      console.error('Error fetching comment count:', error)
+      setCommentCount(0)
+      setCommentsTableExists(false)
+    }
+  }
 
   useEffect(() => {
     if (params.id) {
       const productId = Array.isArray(params.id) ? params.id[0] : params.id
       fetchProduct()
-      fetchCommentCount() // Fetch comment count immediately on page load
       if (user) {
         fetchUserProduct()
       }
@@ -254,33 +290,11 @@ export default function ProductDetailPage() {
   }
 
   const handleCommentCountChange = (count: number) => {
+    // Update comment count immediately
     setCommentCount(count)
-    setCommentsTableExists(true)
   }
 
-  const fetchCommentCount = async () => {
-    if (!params.id) return
 
-    try {
-      const { data, error } = await supabase
-        .from('product_comments')
-        .select('id')
-        .eq('product_id', params.id)
-
-      if (error) {
-        if (error.code === '42P01') {
-          setCommentsTableExists(false)
-        }
-        setCommentCount(0)
-        return
-      }
-
-      setCommentsTableExists(true)
-      setCommentCount(data?.length || 0)
-    } catch (error) {
-      setCommentCount(0)
-    }
-  }
 
   const handleTrackingClick = async () => {
     if (!user || !product) {
@@ -536,7 +550,7 @@ export default function ProductDetailPage() {
                     className="cursor-pointer"
                   >
                     <Plus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Предложи цена</span>
+                    <span className="hidden sm:inline">Добави цена</span>
                   </Button>
                 </>
               )}

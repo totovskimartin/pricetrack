@@ -30,10 +30,10 @@ interface FormErrors {
   [key: string]: string
 }
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 5
 
 export default function NewUserProduct() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -80,6 +80,7 @@ export default function NewUserProduct() {
         } else if (form.name.trim().length < 3) {
           newErrors.name = 'Името трябва да е поне 3 символа'
         }
+        // Brand and description are optional, no validation needed for step 1
         break
       case 2:
         if (!form.category) {
@@ -87,9 +88,6 @@ export default function NewUserProduct() {
         }
         break
       case 3:
-        // Brand and description are optional, no validation needed
-        break
-      case 4:
         if (!form.price_bgn) {
           newErrors.price_bgn = 'Цената е задължителна'
         } else if (parseFloat(form.price_bgn) <= 0) {
@@ -99,7 +97,7 @@ export default function NewUserProduct() {
           newErrors.supermarket_id = 'Моля, изберете магазин'
         }
         break
-      case 5:
+      case 4:
         // Image is optional, no validation needed
         break
     }
@@ -126,10 +124,10 @@ export default function NewUserProduct() {
 
   // Handle authentication redirect on client side
   React.useEffect(() => {
-    if (user === null) { // Only redirect when we're sure user is not authenticated
+    if (!authLoading && user === null) { // Only redirect when we're sure user is not authenticated and not loading
       router.push('/bg/login')
     }
-  }, [user, router])
+  }, [user, authLoading, router])
 
   // Debug: Check if user exists in database
   const checkUserInDatabase = async () => {
@@ -186,7 +184,7 @@ export default function NewUserProduct() {
   }, [user])
 
   const handleSubmit = async () => {
-    if (!validateStep(4)) return
+    if (!validateStep(3)) return
     if (!user) return
 
     console.log('Submitting product with user:', user)
@@ -348,7 +346,7 @@ export default function NewUserProduct() {
   }
 
   // Show loading while checking authentication
-  if (user === undefined) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -449,12 +447,11 @@ export default function NewUserProduct() {
                 <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
 
                 {[
-                  { number: 1, label: 'Име' },
+                  { number: 1, label: 'Продукт' },
                   { number: 2, label: 'Категория' },
-                  { number: 3, label: 'Детайли' },
-                  { number: 4, label: 'Цена' },
-                  { number: 5, label: 'Снимка' },
-                  { number: 6, label: 'Преглед' }
+                  { number: 3, label: 'Цена' },
+                  { number: 4, label: 'Снимка' },
+                  { number: 5, label: 'Преглед' }
                 ].map((step, index) => (
                   <div key={step.number} className="flex flex-col items-center relative z-10">
                     <div
@@ -486,7 +483,7 @@ export default function NewUserProduct() {
                 <div
                   className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-green-500 to-blue-500 -translate-y-1/2 z-0 transition-all duration-700 ease-out"
                   style={{
-                    width: `${((currentStep - 1) / 5) * 100}%`
+                    width: `${((currentStep - 1) / (TOTAL_STEPS - 1)) * 100}%`
                   }}
                 ></div>
               </div>
@@ -514,15 +511,15 @@ export default function NewUserProduct() {
             {/* Multi-Step Form */}
             <Card className="bg-white shadow-xl border-0">
               <CardContent className="p-8">
-                {/* Step 1: Product Name */}
+                {/* Step 1: Product Details */}
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div className="text-center mb-8">
-                      <User className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Име на продукта</h2>
-                      <p className="text-gray-600">Въведете точното име на продукта, който искате да добавите</p>
+                      <Package className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Детайли за продукта</h2>
+                      <p className="text-gray-600">Въведете основната информация за продукта</p>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-lg font-medium">Име на продукта *</Label>
                         <Input
@@ -537,8 +534,26 @@ export default function NewUserProduct() {
                           <p className="text-red-500 text-sm">{errors.name}</p>
                         )}
                       </div>
-                      <div className="text-center text-sm text-gray-500">
-                        Въведете пълното име на продукта, включително размер, тегло или количество ако е приложимо
+                      <div className="space-y-2">
+                        <Label htmlFor="brand" className="text-lg font-medium">Марка (по избор)</Label>
+                        <Input
+                          id="brand"
+                          value={form.brand}
+                          onChange={(e) => handleChange('brand', e.target.value)}
+                          placeholder="напр. Добруджа, Данон, Нестле..."
+                          className="text-lg p-4 h-14"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="text-lg font-medium">Описание (по избор)</Label>
+                        <Textarea
+                          id="description"
+                          value={form.description}
+                          onChange={(e) => handleChange('description', e.target.value)}
+                          placeholder="Допълнителна информация за продукта..."
+                          className="text-lg p-4 min-h-[100px] resize-none"
+                          rows={4}
+                        />
                       </div>
                     </div>
                   </div>
@@ -582,44 +597,8 @@ export default function NewUserProduct() {
                   </div>
                 )}
 
-                {/* Step 3: Brand & Description */}
+                {/* Step 3: Price & Supermarket */}
                 {currentStep === 3 && (
-                  <div className="space-y-6">
-                    <div className="text-center mb-8">
-                      <FileText className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Марка и описание</h2>
-                      <p className="text-gray-600">Добавете допълнителна информация за продукта</p>
-                    </div>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="brand" className="text-lg font-medium">Марка (по избор)</Label>
-                        <Input
-                          id="brand"
-                          value={form.brand}
-                          onChange={(e) => handleChange('brand', e.target.value)}
-                          placeholder="напр. Добруджа, Данон, Нестле..."
-                          className="text-lg p-4 h-14"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="description" className="text-lg font-medium">Описание (по избор)</Label>
-                        <Textarea
-                          id="description"
-                          value={form.description}
-                          onChange={(e) => handleChange('description', e.target.value)}
-                          placeholder="Кратко описание на продукта, специални характеристики..."
-                          rows={4}
-                          className="text-lg p-4"
-                        />
-                      </div>
-                    </div>
-                    <div className="text-center text-sm text-gray-500">
-                      Тези полета не са задължителни, но помагат на потребителите да намерят продукта по-лесно
-                    </div>
-                  </div>
-                )}
-                {/* Step 4: Price & Supermarket */}
-                {currentStep === 4 && (
                   <div className="space-y-6">
                     <div className="text-center mb-8">
                       <DollarSign className="h-12 w-12 text-blue-500 mx-auto mb-4" />
@@ -679,8 +658,8 @@ export default function NewUserProduct() {
                   </div>
                 )}
 
-                {/* Step 5: Image Upload */}
-                {currentStep === 5 && (
+                {/* Step 4: Image Upload */}
+                {currentStep === 4 && (
                   <div className="space-y-6">
                     <div className="text-center mb-8">
                       <ImageIcon className="h-12 w-12 text-blue-500 mx-auto mb-4" />
@@ -739,8 +718,8 @@ export default function NewUserProduct() {
                   </div>
                 )}
 
-                {/* Step 6: Review */}
-                {currentStep === 6 && (
+                {/* Step 5: Review */}
+                {currentStep === 5 && (
                   <div className="space-y-6">
                     <div className="text-center mb-8">
                       <CheckCircle className="h-12 w-12 text-blue-500 mx-auto mb-4" />

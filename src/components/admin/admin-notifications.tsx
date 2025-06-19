@@ -143,9 +143,8 @@ export function AdminNotifications({ userRole, userId }: AdminNotificationsProps
           <div className="max-h-96 overflow-y-auto bg-white">
             {recentNotifications.map((notification) => (
               <DropdownMenuItem key={notification.id} className="p-0 border-b border-gray-100 last:border-b-0">
-                <Link
-                  href={getNotificationUrl(notification)}
-                  className={`w-full p-4 block transition-colors ${
+                <div
+                  className={`w-full p-4 block transition-colors cursor-pointer ${
                     !notification.is_read
                       ? 'bg-blue-50 hover:bg-blue-100 border-l-4 border-l-blue-500'
                       : 'bg-white hover:bg-gray-50'
@@ -155,6 +154,9 @@ export function AdminNotifications({ userRole, userId }: AdminNotificationsProps
                       markAsRead(notification.id, userId)
                     }
                     setIsOpen(false)
+                    // Navigate to the notification URL
+                    const url = getNotificationUrl(notification)
+                    window.location.href = url
                   }}
                 >
                   <div className="flex items-start space-x-3">
@@ -197,7 +199,7 @@ export function AdminNotifications({ userRole, userId }: AdminNotificationsProps
                       </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               </DropdownMenuItem>
             ))}
           </div>

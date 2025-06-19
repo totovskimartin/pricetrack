@@ -23,15 +23,17 @@ interface TourGuideProps {
   isOpen: boolean
   onClose: () => void
   onComplete: () => void
+  onNeverShowAgain?: () => void
   title?: string
   description?: string
 }
 
-export function TourGuide({ 
-  steps, 
-  isOpen, 
-  onClose, 
-  onComplete, 
+export function TourGuide({
+  steps,
+  isOpen,
+  onClose,
+  onComplete,
+  onNeverShowAgain,
   title = "Добре дошли!",
   description = "Нека ви покажем как да използвате тази страница"
 }: TourGuideProps) {
@@ -144,6 +146,13 @@ export function TourGuide({
     onClose()
   }
 
+  const handleNeverShowAgain = () => {
+    if (onNeverShowAgain) {
+      onNeverShowAgain()
+    }
+    onClose()
+  }
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return
@@ -234,25 +243,40 @@ export function TourGuide({
             </Button>
           )}
 
-          <div className="flex items-center justify-between pt-2">
-            <Button 
-              variant="outline" 
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              size="sm"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Назад
-            </Button>
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 0}
+                size="sm"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Назад
+              </Button>
 
-            <Button onClick={handleSkip} variant="ghost" size="sm">
-              Прескочи
-            </Button>
+              <Button onClick={handleSkip} variant="ghost" size="sm">
+                Прескочи
+              </Button>
 
-            <Button onClick={nextStep} size="sm">
-              {currentStep === steps.length - 1 ? 'Завърши' : 'Напред'}
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
+              <Button onClick={nextStep} size="sm">
+                {currentStep === steps.length - 1 ? 'Завърши' : 'Напред'}
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+
+            {onNeverShowAgain && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleNeverShowAgain}
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Никога не показвай отново
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
         </Card>
@@ -261,38 +285,135 @@ export function TourGuide({
   )
 }
 
+// Helper function to safely access storage (localStorage with sessionStorage fallback)
+const getStorageItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null
+
+  try {
+    // Try localStorage first
+    const value = localStorage.getItem(key)
+    if (value !== null) return value
+
+    // Fallback to sessionStorage
+    return sessionStorage.getItem(key)
+  } catch (error) {
+    console.warn('Storage access failed, trying sessionStorage:', error)
+    try {
+      return sessionStorage.getItem(key)
+    } catch (sessionError) {
+      console.warn('SessionStorage access also failed:', sessionError)
+      return null
+    }
+  }
+}
+
+// Helper function to safely set storage (localStorage with sessionStorage fallback)
+const setStorageItem = (key: string, value: string): boolean => {
+  if (typeof window === 'undefined') return false
+
+  try {
+    localStorage.setItem(key, value)
+    // Also set in sessionStorage as backup
+    sessionStorage.setItem(key, value)
+    return true
+  } catch (error) {
+    console.warn('localStorage write failed, trying sessionStorage:', error)
+    try {
+      sessionStorage.setItem(key, value)
+      return true
+    } catch (sessionError) {
+      console.warn('SessionStorage write also failed:', sessionError)
+      return false
+    }
+  }
+}
+
+// Helper function to safely remove storage item
+const removeStorageItem = (key: string): boolean => {
+  if (typeof window === 'undefined') return false
+
+  try {
+    localStorage.removeItem(key)
+    sessionStorage.removeItem(key)
+    return true
+  } catch (error) {
+    console.warn('Storage remove failed:', error)
+    return false
+  }
+}
+
 // Hook for managing tour state
 export function useTour(tourKey: string, shouldShow: boolean = true) {
   const [isOpen, setIsOpen] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    if (!shouldShow) return
+    if (!shouldShow || typeof window === 'undefined' || initialized) return
 
-    // Check if user has seen this tour before
-    const hasSeenTour = localStorage.getItem(`tour_completed_${tourKey}`)
-    if (!hasSeenTour) {
-      // Small delay to ensure page is fully loaded
-      const timer = setTimeout(() => {
-        setIsOpen(true)
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [tourKey, shouldShow])
+    // Add a small delay to ensure storage is ready (Safari fix)
+    const initTimer = setTimeout(() => {
+      // Check if user has disabled this tour permanently
+      const neverShowAgain = getStorageItem(`tour_never_show_${tourKey}`)
+
+      if (neverShowAgain === 'true') {
+        setInitialized(true)
+        return
+      }
+
+      // Check if user has seen this tour before
+      const hasSeenTour = getStorageItem(`tour_completed_${tourKey}`)
+
+      if (!hasSeenTour || hasSeenTour !== 'true') {
+        // Small delay to ensure page is fully loaded
+        const showTimer = setTimeout(() => {
+          setIsOpen(true)
+          setInitialized(true)
+        }, 1000)
+
+        // Store the timer reference for cleanup
+        return () => clearTimeout(showTimer)
+      } else {
+        setInitialized(true)
+      }
+    }, 200) // Increased delay for Safari storage readiness
+
+    return () => clearTimeout(initTimer)
+  }, [tourKey, shouldShow, initialized])
 
   const completeTour = () => {
-    localStorage.setItem(`tour_completed_${tourKey}`, 'true')
+    setStorageItem(`tour_completed_${tourKey}`, 'true')
+    setIsOpen(false)
+  }
+
+  const neverShowAgain = () => {
+    setStorageItem(`tour_never_show_${tourKey}`, 'true')
+    setStorageItem(`tour_completed_${tourKey}`, 'true')
     setIsOpen(false)
   }
 
   const resetTour = () => {
-    localStorage.removeItem(`tour_completed_${tourKey}`)
+    removeStorageItem(`tour_completed_${tourKey}`)
+    removeStorageItem(`tour_never_show_${tourKey}`)
+    setInitialized(false) // Reset initialization state
     setIsOpen(true)
+  }
+
+  const canShowTour = () => {
+    const neverShow = getStorageItem(`tour_never_show_${tourKey}`)
+    return neverShow !== 'true'
+  }
+
+  // Override setIsOpen to allow manual tour opening
+  const manualSetIsOpen = (open: boolean) => {
+    setIsOpen(open)
   }
 
   return {
     isOpen,
-    setIsOpen,
+    setIsOpen: manualSetIsOpen,
     completeTour,
-    resetTour
+    neverShowAgain,
+    resetTour,
+    canShowTour
   }
 }

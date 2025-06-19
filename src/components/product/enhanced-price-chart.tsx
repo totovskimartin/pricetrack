@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts'
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts'
 import { Calendar, TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react'
 import { format, subDays, subWeeks, subMonths } from 'date-fns'
 import { bg } from 'date-fns/locale'
@@ -32,7 +32,7 @@ interface EnhancedPriceChartProps {
 }
 
 type TimeRange = '7d' | '30d' | '90d' | '6m' | '1y' | 'all'
-type ChartType = 'line' | 'area'
+type ChartType = 'area'
 type Currency = 'BGN' | 'EUR'
 
 interface ChartDataPoint {
@@ -46,7 +46,7 @@ interface ChartDataPoint {
 
 export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
-  const [chartType, setChartType] = useState<ChartType>('line')
+  const [chartType, setChartType] = useState<ChartType>('area')
   const [currency, setCurrency] = useState<Currency>('BGN')
   const [selectedSupermarket, setSelectedSupermarket] = useState<string>('all')
 
@@ -192,9 +192,44 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
     return null
   }
 
+  const CustomYAxisTick = ({ x, y, payload }: any) => {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={4}
+          textAnchor="end"
+          fill="#64748b"
+          fontSize="11"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          {formatPrice(payload.value)}
+        </text>
+      </g>
+    )
+  }
+
+  const CustomXAxisTick = ({ x, y, payload }: any) => {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={20}
+          dy={4}
+          textAnchor="middle"
+          fill="#64748b"
+          fontSize="11"
+        >
+          {payload.value}
+        </text>
+      </g>
+    )
+  }
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -213,7 +248,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
           Проследете промените в цената на "{product.name}" във времето
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         {/* Controls */}
         <div className="flex flex-wrap gap-2 mb-6">
           <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
@@ -254,32 +289,11 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
             </SelectContent>
           </Select>
 
-          <div className="flex border rounded-md">
-            <Button
-              variant={chartType === 'line' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setChartType('line')}
-              className="rounded-r-none"
-            >
-              Линия
-            </Button>
-            <Button
-              variant={chartType === 'area' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setChartType('area')}
-              className="rounded-l-none"
-            >
-              Област
-            </Button>
-          </div>
+
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-600">Текуща</div>
-            <div className="text-lg font-bold">{formatPrice(statistics.current)}</div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div className="text-center p-3 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-600">Средна</div>
             <div className="text-lg font-bold">{formatPrice(statistics.avg)}</div>
@@ -296,55 +310,61 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
 
         {/* Chart */}
         {chartData.length > 0 ? (
-          <div className="h-80 w-full">
+          <div className="h-80 md:h-80 sm:h-96 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              {chartType === 'area' ? (
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="formattedDate"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12 }}
-                    domain={['dataMin - 0.1', 'dataMax + 0.1']}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.1}
-                    strokeWidth={2}
-                  />
-                  <ReferenceLine y={statistics.avg} stroke="#f59e0b" strokeDasharray="5 5" />
-                </AreaChart>
-              ) : (
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="formattedDate"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12 }}
-                    domain={['dataMin - 0.1', 'dataMax + 0.1']}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
-                  />
-                  <ReferenceLine y={statistics.avg} stroke="#f59e0b" strokeDasharray="5 5" />
-                </LineChart>
-              )}
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25}/>
+                    <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#3b82f6" floodOpacity="0.1"/>
+                  </filter>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="2 4"
+                  stroke="#e1e5e9"
+                  strokeOpacity={0.6}
+                  horizontal={true}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="formattedDate"
+                  tick={<CustomXAxisTick />}
+                  interval="preserveStartEnd"
+                  axisLine={false}
+                  tickLine={false}
+                  height={60}
+                />
+                <YAxis
+                  tick={<CustomYAxisTick />}
+                  domain={['dataMin', 'dataMax']}
+                  ticks={[statistics.min, statistics.max]}
+                  axisLine={false}
+                  tickLine={false}
+                  width={50}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke="#2563eb"
+                  fill="url(#priceGradient)"
+                  strokeWidth={2}
+                  filter="url(#shadow)"
+                  dot={false}
+                  activeDot={{
+                    r: 6,
+                    stroke: '#2563eb',
+                    strokeWidth: 3,
+                    fill: '#ffffff',
+                    filter: "url(#shadow)"
+                  }}
+                />
+
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         ) : (
@@ -362,10 +382,6 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
             <div className="flex items-center space-x-1">
               <div className="w-3 h-0.5 bg-blue-500"></div>
               <span>Цена</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-3 h-0.5 bg-yellow-500 border-dashed border-t"></div>
-              <span>Средна цена</span>
             </div>
           </div>
         )}

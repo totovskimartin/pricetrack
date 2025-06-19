@@ -152,15 +152,20 @@ export default function AlertsManagement() {
 
   const markAsRead = async (notificationIds: string[]) => {
     try {
-      const { error } = await supabase
-        .from('admin_notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
+      // Mark each notification as read using the RPC function
+      const promises = notificationIds.map(id =>
+        supabase.rpc('mark_admin_notification_read', {
+          p_notification_id: id,
+          p_user_id: 'system' // or get actual user ID if available
         })
-        .in('id', notificationIds)
+      )
 
-      if (error) throw error
+      const results = await Promise.all(promises)
+      const errors = results.filter(result => result.error)
+
+      if (errors.length > 0) {
+        throw new Error(`Failed to mark ${errors.length} notifications as read`)
+      }
 
       setNotifications(prev =>
         prev.map(notification =>
@@ -560,11 +565,21 @@ export default function AlertsManagement() {
                           >
                             <FileText className="h-4 w-4" />
                           </Button>
-                          <Link href={getNotificationUrl(notification)}>
-                            <Button variant="ghost" size="sm" title="Отиди към секцията">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Отиди към секцията"
+                            onClick={async () => {
+                              // Mark as read if unread
+                              if (!notification.is_read) {
+                                await markAsRead([notification.id])
+                              }
+                              // Navigate to the URL
+                              window.location.href = getNotificationUrl(notification)
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           {!notification.is_read && (
                             <Button
                               variant="ghost"

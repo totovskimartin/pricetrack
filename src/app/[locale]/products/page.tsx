@@ -29,6 +29,7 @@ interface Product {
     price: number
     currency: string
     supermarket: {
+      id: string
       name: string
       logo_url: string
     }
@@ -58,7 +59,7 @@ export default function ProductsPage() {
   const { user } = useAuth()
 
   // Tour guide for first-time users (show for all users, but content varies)
-  const { isOpen: isTourOpen, setIsOpen: setIsTourOpen, completeTour } = useTour('products_page', !loading)
+  const { isOpen: isTourOpen, setIsOpen: setIsTourOpen, completeTour, neverShowAgain, canShowTour } = useTour('products_page', !loading)
 
   // Tour steps (conditional based on user authentication)
   const tourSteps = [
@@ -235,6 +236,7 @@ export default function ProductsPage() {
             currency: 'BGN' as const,
             recorded_at: price.created_at,
             supermarket: {
+              id: price.supermarkets?.id || '',
               name: price.supermarkets?.name || '',
               logo_url: price.supermarkets?.logo_url || ''
             }
@@ -336,6 +338,27 @@ export default function ProductsPage() {
     return latest
   }
 
+  const getLowestPrice = (product: Product) => {
+    if (!product.price_entries || product.price_entries.length === 0) {
+      return null
+    }
+
+    // Get the latest price from each supermarket
+    const supermarketLatestPrices = product.price_entries.reduce((acc, entry) => {
+      const supermarketId = entry.supermarket.id
+      if (!acc[supermarketId] || new Date(entry.recorded_at) > new Date(acc[supermarketId].recorded_at)) {
+        acc[supermarketId] = entry
+      }
+      return acc
+    }, {} as Record<string, typeof product.price_entries[0]>)
+
+    // Find the lowest price among the latest prices from each supermarket
+    const latestPrices = Object.values(supermarketLatestPrices)
+    return latestPrices.reduce((lowest, entry) => {
+      return entry.price < lowest.price ? entry : lowest
+    })
+  }
+
   const getPriceChange = (product: Product) => {
     if (!product.price_entries || product.price_entries.length < 2) {
       return null
@@ -404,6 +427,7 @@ export default function ProductsPage() {
         isOpen={isTourOpen}
         onClose={() => setIsTourOpen(false)}
         onComplete={completeTour}
+        onNeverShowAgain={neverShowAgain}
         title="Добре дошли в Продукти!"
         description="Нека ви покажем как да използвате тази страница"
       />
@@ -416,15 +440,17 @@ export default function ProductsPage() {
               <h1 className="text-2xl font-bold text-gray-900">Продукти</h1>
               <p className="text-gray-600">Търсете и сравнявайте цени на продукти</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsTourOpen(true)}
-              className="hidden sm:flex items-center space-x-2"
-            >
-              <HelpCircle className="h-4 w-4" />
-              <span>Покажи обиколката</span>
-            </Button>
+            {canShowTour() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTourOpen(true)}
+                className="hidden sm:flex items-center space-x-2"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span>Покажи обиколката</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -527,7 +553,7 @@ export default function ProductsPage() {
           /* Grid View */
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             {products.map((product) => {
-              const latestPrice = getLatestPrice(product)
+              const lowestPrice = getLowestPrice(product)
               const priceChange = getPriceChange(product)
 
               return (
@@ -553,28 +579,17 @@ export default function ProductsPage() {
                     <CardContent className="p-2 pt-0">
                       <div className="space-y-1">
                         {/* Price */}
-                        {latestPrice ? (
+                        {lowestPrice ? (
                           <div>
                             <div className="text-sm font-bold text-green-600">
-                              {formatPriceWithEUR(latestPrice.price).bgn}
+                              {formatPriceWithEUR(lowestPrice.price).bgn}
                             </div>
                             <div className="text-xs text-gray-500 mb-0.5">
-                              {formatPriceWithEUR(latestPrice.price).eur}
+                              {formatPriceWithEUR(lowestPrice.price).eur}
                             </div>
                             <div className="text-xs text-gray-500 flex items-center justify-between">
-                              <span className="truncate">{latestPrice.supermarket.name}</span>
-                              {priceChange && priceChange.type !== 'same' && (
-                                <div className={`flex items-center text-xs ${
-                                  priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
-                                }`}>
-                                  {priceChange.type === 'increase' ? (
-                                    <TrendingUp className="h-2.5 w-2.5 mr-0.5" />
-                                  ) : (
-                                    <TrendingDown className="h-2.5 w-2.5 mr-0.5" />
-                                  )}
-                                  {priceChange.percentage}%
-                                </div>
-                              )}
+                              <span className="truncate">{lowestPrice.supermarket.name}</span>
+                              <span className="text-xs text-green-600 font-medium">Най-ниска</span>
                             </div>
                           </div>
                         ) : (
@@ -626,7 +641,7 @@ export default function ProductsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {products.map((product) => {
-                    const latestPrice = getLatestPrice(product)
+                    const lowestPrice = getLowestPrice(product)
                     const priceChange = getPriceChange(product)
                     const stats = getProductStats(product.id)
 
@@ -668,26 +683,17 @@ export default function ProductsPage() {
                           </Badge>
                         </td>
                         <td className="py-3 px-2 sm:px-4">
-                          {latestPrice ? (
+                          {lowestPrice ? (
                             <div>
                               <div className="font-bold text-green-600 text-sm sm:text-base">
-                                {formatPriceWithEUR(latestPrice.price).bgn}
+                                {formatPriceWithEUR(lowestPrice.price).bgn}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {formatPriceWithEUR(latestPrice.price).eur}
+                                {formatPriceWithEUR(lowestPrice.price).eur}
                               </div>
-                              {priceChange && priceChange.type !== 'same' && (
-                                <div className={`flex items-center text-xs mt-1 ${
-                                  priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
-                                }`}>
-                                  {priceChange.type === 'increase' ? (
-                                    <TrendingUp className="h-3 w-3 mr-1" />
-                                  ) : (
-                                    <TrendingDown className="h-3 w-3 mr-1" />
-                                  )}
-                                  {priceChange.percentage}%
-                                </div>
-                              )}
+                              <div className="text-xs text-green-600 font-medium mt-1">
+                                Най-ниска в {lowestPrice.supermarket.name}
+                              </div>
                             </div>
                           ) : (
                             <span className="text-gray-500 text-sm">Няма данни</span>

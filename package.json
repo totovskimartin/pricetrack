@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:db": "node scripts/test-database.js",
+    "test:notifications": "node scripts/test-notification-mark-as-read.js",
     "migrate": "node scripts/run-migration.js",
     "migrate:notifications": "echo 'Please run the SQL in supabase/migrations/020_admin_notifications.sql in your Supabase dashboard'",
     "type-check": "tsc --noEmit"

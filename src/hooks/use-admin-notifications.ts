@@ -90,41 +90,36 @@ export function useAdminNotifications(userRole?: string) {
     if (!userRole) return
 
     try {
-      const { data, error } = await supabase
-        .from('admin_notifications')
-        .select('id', { count: 'exact' })
-        .eq('is_read', false)
+      const { data, error } = await supabase.rpc('get_admin_unread_notifications_count', {
+        p_user_role: userRole
+      })
 
       if (error) {
         throw error
       }
 
-      setUnreadCount(data?.length || 0)
+      setUnreadCount(data || 0)
     } catch (err) {
       console.error('Error fetching unread count:', err)
+      setUnreadCount(0)
     }
   }
 
   const markAsRead = async (notificationId: string, userId: string) => {
     try {
-      const { error } = await supabase
-        .from('admin_notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-          read_by: userId
-        })
-        .eq('id', notificationId)
-        .eq('is_read', false)
+      const { data, error } = await supabase.rpc('mark_admin_notification_read', {
+        p_notification_id: notificationId,
+        p_user_id: userId
+      })
 
       if (error) {
         throw error
       }
 
       // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId
             ? { ...notification, is_read: true, read_at: new Date().toISOString(), read_by: userId }
             : notification
         )
@@ -133,7 +128,7 @@ export function useAdminNotifications(userRole?: string) {
       // Update unread count
       setUnreadCount(prev => Math.max(0, prev - 1))
 
-      return true
+      return data
     } catch (err) {
       console.error('Error marking notification as read:', err)
       return false
@@ -143,26 +138,22 @@ export function useAdminNotifications(userRole?: string) {
   const markAllAsRead = async (userId: string) => {
     try {
       const unreadNotifications = notifications.filter(n => !n.is_read)
-      
+
       if (unreadNotifications.length === 0) {
         return true
       }
 
-      const { error } = await supabase
-        .from('admin_notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-          read_by: userId
-        })
-        .eq('is_read', false)
+      const { data, error } = await supabase.rpc('mark_all_admin_notifications_read', {
+        p_user_id: userId,
+        p_user_role: userRole
+      })
 
       if (error) {
         throw error
       }
 
       // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({
           ...notification,
           is_read: true,
@@ -173,7 +164,7 @@ export function useAdminNotifications(userRole?: string) {
 
       setUnreadCount(0)
 
-      return true
+      return data
     } catch (err) {
       console.error('Error marking all notifications as read:', err)
       return false
