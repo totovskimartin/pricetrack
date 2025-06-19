@@ -67,58 +67,14 @@ export function useProductStats(productId?: string) {
     }
   }
 
-  // Fetch stats for multiple products using database function
+  // Fetch stats for multiple products using manual queries
   const fetchMultipleProductStats = async (productIds: string[]) => {
     if (productIds.length === 0) return {}
 
     setLoading(true)
-    try {
-      // Use the database function for better performance
-      const { data, error } = await supabase
-        .rpc('get_multiple_products_stats', {
-          p_product_ids: productIds
-        })
 
-      if (error) {
-        console.error('Database function error:', error)
-        throw error
-      }
-
-      // Process the data into stats map
-      const statsMap: Record<string, ProductStats> = {}
-
-      // Initialize all products with zero stats
-      productIds.forEach(id => {
-        statsMap[id] = {
-          product_id: id,
-          favorites_count: 0,
-          tracking_count: 0,
-          comments_count: 0,
-          total_upvotes: 0
-        }
-      })
-
-      // Update with actual data
-      data?.forEach((item: any) => {
-        statsMap[item.product_id] = {
-          product_id: item.product_id,
-          favorites_count: item.favorites_count || 0,
-          tracking_count: item.tracking_count || 0,
-          comments_count: item.comments_count || 0,
-          total_upvotes: item.total_likes || 0
-        }
-      })
-
-      console.log('Product stats fetched:', statsMap)
-      setAllStats(statsMap)
-      setLoading(false)
-      return statsMap
-    } catch (error) {
-      console.error('Error fetching multiple product stats:', error)
-
-      // Fallback to manual queries if function doesn't exist
-      return await fetchMultipleProductStatsManual(productIds)
-    }
+    // Use manual method directly since database function doesn't exist
+    return await fetchMultipleProductStatsManual(productIds)
   }
 
   // Fallback manual method
@@ -192,7 +148,6 @@ export function useProductStats(productId?: string) {
         }
       })
 
-      console.log('Product stats fetched (manual):', statsMap)
       setAllStats(statsMap)
       setLoading(false)
       return statsMap

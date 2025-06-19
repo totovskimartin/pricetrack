@@ -46,7 +46,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:ml-0 ml-0">
         {/* Content Area */}
-        <main className="flex-1">
+        <main className="flex-1 pt-16 lg:pt-0">
           <div className="lg:pl-0 pl-0">
             {children}
           </div>

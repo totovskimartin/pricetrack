@@ -10,6 +10,9 @@ import { supabase } from '@/lib/supabase'
 import { logAdminAction } from '@/lib/admin'
 import { useAuth } from '@/components/providers/auth-provider'
 import { invalidateDiscussionCache } from '@/lib/cache'
+import { useConfirmation } from '@/hooks/use-confirmation'
+import { useToast } from '@/components/providers/toast-provider'
+import { MobileDiscussionsModeration } from './mobile-discussions-moderation'
 import {
   Search,
   Check,
@@ -70,6 +73,8 @@ interface Comment {
 
 export default function DiscussionsModeration() {
   const { user } = useAuth()
+  const { confirm, ConfirmationComponent } = useConfirmation()
+  const { showSuccess } = useToast()
   const [discussions, setDiscussions] = useState<Discussion[]>([])
   const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -79,6 +84,18 @@ export default function DiscussionsModeration() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'discussions' | 'comments'>('discussions')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const fetchDiscussions = useCallback(async () => {
     console.log('Starting fetchDiscussions with statusFilter:', statusFilter)
@@ -195,7 +212,13 @@ export default function DiscussionsModeration() {
         return
       }
 
-      await logAdminAction(user.id, 'approve_discussion', 'discussion', discussionId)
+      // Log the action (don't fail if logging fails)
+      try {
+        await logAdminAction(user.id, 'approve_discussion', 'discussion', discussionId)
+      } catch (logError) {
+        console.warn('Failed to log admin action:', logError)
+      }
+
       invalidateDiscussionCache()
       await fetchDiscussions()
     } catch (error) {
@@ -207,28 +230,47 @@ export default function DiscussionsModeration() {
 
   const handleRejectDiscussion = async (discussionId: string) => {
     if (!user) return
-    if (!confirm('Сигурни ли сте, че искате да отхвърлите тази дискусия?')) return
 
-    setActionLoading(discussionId)
-    try {
-      const { error } = await supabase
-        .from('discussions')
-        .delete()
-        .eq('id', discussionId)
+    confirm(
+      'Отхвърляне на дискусия',
+      'Сигурни ли сте, че искате да отхвърлите тази дискусия? Тя ще бъде изтрита окончателно.',
+      async () => {
+        setActionLoading(discussionId)
+        try {
+          const { error } = await supabase
+            .from('discussions')
+            .delete()
+            .eq('id', discussionId)
 
-      if (error) {
-        console.error('Error rejecting discussion:', error)
-        return
+          if (error) {
+            console.error('Error rejecting discussion:', error)
+            return
+          }
+
+          // Log the action (don't fail if logging fails)
+          try {
+            await logAdminAction(user.id, 'reject_discussion', 'discussion', discussionId)
+          } catch (logError) {
+            console.warn('Failed to log admin action:', logError)
+          }
+
+          invalidateDiscussionCache()
+          await fetchDiscussions()
+
+          // Show success toast
+          showSuccess('Дискусията е отхвърлена успешно')
+        } catch (error) {
+          console.error('Error:', error)
+        } finally {
+          setActionLoading(null)
+        }
+      },
+      {
+        confirmText: 'Отхвърли',
+        cancelText: 'Отказ',
+        type: 'warning'
       }
-
-      await logAdminAction(user.id, 'reject_discussion', 'discussion', discussionId)
-      invalidateDiscussionCache()
-      await fetchDiscussions()
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setActionLoading(null)
-    }
+    )
   }
 
   const handleApproveComment = async (commentId: string) => {
@@ -246,7 +288,13 @@ export default function DiscussionsModeration() {
         return
       }
 
-      await logAdminAction(user.id, 'approve_comment', 'comment', commentId)
+      // Log the action (don't fail if logging fails)
+      try {
+        await logAdminAction(user.id, 'approve_comment', 'comment', commentId)
+      } catch (logError) {
+        console.warn('Failed to log admin action:', logError)
+      }
+
       if (selectedDiscussion) {
         await fetchComments(selectedDiscussion.id)
       }
@@ -259,96 +307,141 @@ export default function DiscussionsModeration() {
 
   const handleRejectComment = async (commentId: string) => {
     if (!user) return
-    if (!confirm('Сигурни ли сте, че искате да отхвърлите този коментар?')) return
 
-    setActionLoading(commentId)
-    try {
-      const { error } = await supabase
-        .from('discussion_comments')
-        .delete()
-        .eq('id', commentId)
+    confirm(
+      'Отхвърляне на коментар',
+      'Сигурни ли сте, че искате да отхвърлите този коментар? Той ще бъде изтрит окончателно.',
+      async () => {
+        setActionLoading(commentId)
+        try {
+          const { error } = await supabase
+            .from('discussion_comments')
+            .delete()
+            .eq('id', commentId)
 
-      if (error) {
-        console.error('Error rejecting comment:', error)
-        return
+          if (error) {
+            console.error('Error rejecting comment:', error)
+            return
+          }
+
+          // Log the action (don't fail if logging fails)
+          try {
+            await logAdminAction(user.id, 'reject_comment', 'comment', commentId)
+          } catch (logError) {
+            console.warn('Failed to log admin action:', logError)
+          }
+
+          if (selectedDiscussion) {
+            await fetchComments(selectedDiscussion.id)
+          }
+
+          // Show success toast
+          showSuccess('Коментарът е отхвърлен успешно')
+        } catch (error) {
+          console.error('Error:', error)
+        } finally {
+          setActionLoading(null)
+        }
+      },
+      {
+        confirmText: 'Отхвърли',
+        cancelText: 'Отказ',
+        type: 'warning'
       }
-
-      await logAdminAction(user.id, 'reject_comment', 'comment', commentId)
-      if (selectedDiscussion) {
-        await fetchComments(selectedDiscussion.id)
-      }
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setActionLoading(null)
-    }
+    )
   }
 
   const handleDeleteComment = async (commentId: string) => {
     if (!user) return
-    if (!confirm('Сигурни ли сте, че искате да изтриете този коментар?')) return
 
-    setActionLoading(commentId)
-    try {
-      const { error } = await supabase
-        .from('discussion_comments')
-        .delete()
-        .eq('id', commentId)
+    confirm(
+      'Изтриване на коментар',
+      'Сигурни ли сте, че искате да изтриете този коментар? Това действие е необратимо.',
+      async () => {
+        setActionLoading(commentId)
+        try {
+          const { error } = await supabase
+            .from('discussion_comments')
+            .delete()
+            .eq('id', commentId)
 
-      if (error) {
-        console.error('Error deleting comment:', error)
-        return
+          if (error) {
+            console.error('Error deleting comment:', error)
+            return
+          }
+
+          // Log the action (don't fail if logging fails)
+          try {
+            await logAdminAction(user.id, 'delete_comment', 'comment', commentId)
+          } catch (logError) {
+            console.warn('Failed to log admin action:', logError)
+          }
+
+          if (selectedDiscussion) {
+            await fetchComments(selectedDiscussion.id)
+          }
+
+          // Show success toast
+          showSuccess('Коментарът е изтрит успешно')
+        } catch (error) {
+          console.error('Error:', error)
+        } finally {
+          setActionLoading(null)
+        }
+      },
+      {
+        confirmText: 'Изтрий',
+        cancelText: 'Отказ',
+        type: 'error'
       }
-
-      await logAdminAction(user.id, 'delete_comment', 'comment', commentId)
-      if (selectedDiscussion) {
-        await fetchComments(selectedDiscussion.id)
-      }
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setActionLoading(null)
-    }
+    )
   }
 
   const handleDeleteDiscussion = async (discussionId: string) => {
     if (!user) return
-    if (!confirm('Сигурни ли сте, че искате да изтриете тази дискусия? Това ще изтрие и всички коментари в нея.')) return
 
-    setActionLoading(discussionId)
-    try {
-      // First delete all comments in the discussion
-      const { error: commentsError } = await supabase
-        .from('discussion_comments')
-        .delete()
-        .eq('discussion_id', discussionId)
+    confirm(
+      'Изтриване на дискусия',
+      'Сигурни ли сте, че искате да изтриете тази дискусия? Това ще изтрие и всички коментари в нея. Това действие е необратимо.',
+      async () => {
+        setActionLoading(discussionId)
+        try {
+          // Delete the discussion (comments will be automatically deleted due to CASCADE)
+          const { error } = await supabase
+            .from('discussions')
+            .delete()
+            .eq('id', discussionId)
 
-      if (commentsError) {
-        console.error('Error deleting comments:', commentsError)
-        return
+          if (error) {
+            console.error('Error deleting discussion:', error)
+            return
+          }
+
+          // Log the action (don't fail if logging fails)
+          try {
+            await logAdminAction(user.id, 'delete_discussion', 'discussion', discussionId)
+          } catch (logError) {
+            console.warn('Failed to log admin action:', logError)
+          }
+
+          // Invalidate cache and refresh discussions
+          invalidateDiscussionCache()
+          await fetchDiscussions()
+
+          // Show success toast
+          showSuccess('Дискусията е изтрита успешно')
+        } catch (error) {
+          console.error('Error:', error)
+        } finally {
+          setActionLoading(null)
+        }
+      },
+      {
+        confirmText: 'Изтрий дискусията',
+        cancelText: 'Отказ',
+        type: 'error'
       }
-
-      // Then delete the discussion
-      const { error: discussionError } = await supabase
-        .from('discussions')
-        .delete()
-        .eq('id', discussionId)
-
-      if (discussionError) {
-        console.error('Error deleting discussion:', discussionError)
-        return
-      }
-
-      await logAdminAction(user.id, 'delete_discussion', 'discussion', discussionId)
-
-      // Invalidate cache and refresh discussions
-      invalidateDiscussionCache()
-      await fetchDiscussions()
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setActionLoading(null)
-    }
+    )
   }
 
   const filteredDiscussions = discussions.filter(discussion =>
@@ -393,8 +486,33 @@ export default function DiscussionsModeration() {
     fetchDiscussions()
   }, [fetchDiscussions])
 
+  // Mobile Layout
+  if (isMobile && viewMode === 'discussions') {
+    return (
+      <>
+        <ConfirmationComponent />
+        <MobileDiscussionsModeration
+          discussions={filteredDiscussions}
+          loading={loading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          categoryFilter="all"
+          setCategoryFilter={() => {}}
+          onApprove={handleApproveDiscussion}
+          onReject={handleRejectDiscussion}
+          onView={(discussion) => window.open(`/bg/discussions/${discussion.slug}`, '_blank')}
+          formatDate={formatDate}
+        />
+      </>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="space-y-6">
+      <ConfirmationComponent />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -774,6 +892,9 @@ export default function DiscussionsModeration() {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationComponent />
     </div>
   )
 }

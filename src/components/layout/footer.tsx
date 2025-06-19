@@ -1,31 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { useAuth } from '@/components/providers/auth-provider'
-import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Heart,
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Mail,
+  Phone,
+  MapPin,
   ShoppingCart,
-  Users,
-  Shield,
   FileText,
   HelpCircle
 } from 'lucide-react'
 
 export function Footer() {
-  const { user } = useAuth()
-
   const currentYear = new Date().getFullYear()
 
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -71,46 +65,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Навигация</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/bg/products" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Продукти
-                </Link>
-              </li>
-              <li>
-                <Link href="/bg/supermarkets" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Супермаркети
-                </Link>
-              </li>
-              <li>
-                <Link href="/bg/discussions" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center">
-                  <Users className="h-4 w-4 mr-2" />
-                  Дискусии
-                </Link>
-              </li>
-              {user && (
-                <>
-                  <li>
-                    <Link href="/bg/favorites" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center">
-                      <Heart className="h-4 w-4 mr-2" />
-                      Любими
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/bg/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm flex items-center">
-                      <Shield className="h-4 w-4 mr-2" />
-                      Табло
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
+
 
           {/* Support & Legal */}
           <div className="space-y-4">
@@ -179,8 +134,13 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-gray-400 text-sm">
-              © {currentYear} PriceTrack България. Всички права запазени.
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
+              <div className="text-gray-400 text-sm">
+                © {currentYear} PriceTrack България. Всички права запазени.
+              </div>
+              <div className="text-gray-500 text-xs">
+                v0.2-beta
+              </div>
             </div>
             <div className="flex items-center space-x-6 text-sm">
               <Link href="/bg/privacy" className="text-gray-400 hover:text-white transition-colors">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { supabase } from '@/lib/supabase'
 
@@ -33,55 +33,7 @@ export function usePriceTracking() {
   const [trackingIds, setTrackingIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Load tracked products from database
-  useEffect(() => {
-    if (user) {
-      fetchUserTracking()
-    } else {
-      setTrackedProducts([])
-      setTrackingIds([])
-    }
-  }, [user])
-
-  const fetchUserTracking = async () => {
-    if (!user) return
-
-    try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 3000)
-      )
-
-      const queryPromise = supabase
-        .from('user_tracking')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any
-
-      if (!error && data) {
-        const productIds = data.map((track: any) => track.product_id)
-        setTrackingIds(productIds)
-
-        // Fetch full tracking data with product details (non-blocking)
-        fetchTrackedProductsDetails(data).catch(err =>
-          console.log('Failed to fetch tracked product details:', err)
-        )
-      } else {
-        // Fallback to localStorage if database isn't set up yet
-        const localTracking = JSON.parse(localStorage.getItem(`tracking_${user.id}`) || '[]')
-        setTrackingIds(localTracking)
-      }
-    } catch (error) {
-      console.log('Tracking query failed, using localStorage fallback:', error)
-      // Fallback to localStorage
-      const localTracking = JSON.parse(localStorage.getItem(`tracking_${user.id}`) || '[]')
-      setTrackingIds(localTracking)
-    }
-  }
-
-  const fetchTrackedProductsDetails = async (trackingData: any[]) => {
+  const fetchTrackedProductsDetails = useCallback(async (trackingData: any[]) => {
     if (!trackingData.length) {
       setTrackedProducts([])
       return
@@ -144,9 +96,57 @@ export function usePriceTracking() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const addToTracking = async (productId: string, targetPrice?: number) => {
+  const fetchUserTracking = useCallback(async () => {
+    if (!user) return
+
+    try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      )
+
+      const queryPromise = supabase
+        .from('user_tracking')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any
+
+      if (!error && data) {
+        const productIds = data.map((track: any) => track.product_id)
+        setTrackingIds(productIds)
+
+        // Fetch full tracking data with product details (non-blocking)
+        fetchTrackedProductsDetails(data).catch(err =>
+          console.log('Failed to fetch tracked product details:', err)
+        )
+      } else {
+        // Fallback to localStorage if database isn't set up yet
+        const localTracking = JSON.parse(localStorage.getItem(`tracking_${user.id}`) || '[]')
+        setTrackingIds(localTracking)
+      }
+    } catch (error) {
+      console.log('Tracking query failed, using localStorage fallback:', error)
+      // Fallback to localStorage
+      const localTracking = JSON.parse(localStorage.getItem(`tracking_${user.id}`) || '[]')
+      setTrackingIds(localTracking)
+    }
+  }, [user, fetchTrackedProductsDetails])
+
+  // Load tracked products from database
+  useEffect(() => {
+    if (user) {
+      fetchUserTracking()
+    } else {
+      setTrackedProducts([])
+      setTrackingIds([])
+    }
+  }, [user, fetchUserTracking])
+
+  const addToTracking = useCallback(async (productId: string, targetPrice?: number) => {
     if (!user) return false
 
     try {
@@ -217,9 +217,9 @@ export function usePriceTracking() {
       setTrackingIds(newTrackingIds)
       return true
     }
-  }
+  }, [user, trackingIds, fetchUserTracking])
 
-  const removeFromTracking = async (productId: string) => {
+  const removeFromTracking = useCallback(async (productId: string) => {
     if (!user) return false
 
     try {
@@ -236,7 +236,7 @@ export function usePriceTracking() {
         setTrackingIds(newTrackingIds)
         // Also update localStorage as backup
         localStorage.setItem(`tracking_${user.id}`, JSON.stringify(newTrackingIds))
-        
+
         // Refresh tracked products
         await fetchUserTracking()
         return true
@@ -256,7 +256,7 @@ export function usePriceTracking() {
       setTrackingIds(newTrackingIds)
       return true
     }
-  }
+  }, [user, trackingIds, fetchUserTracking])
 
   const updateTargetPrice = async (productId: string, targetPrice: number) => {
     if (!user) return false
@@ -282,21 +282,21 @@ export function usePriceTracking() {
     return false
   }
 
-  const toggleTracking = async (productId: string, targetPrice?: number) => {
+  const toggleTracking = useCallback(async (productId: string, targetPrice?: number) => {
     if (!user) return false
 
     const isTrackingNow = trackingIds.includes(productId)
-    
+
     if (isTrackingNow) {
       return await removeFromTracking(productId)
     } else {
       return await addToTracking(productId, targetPrice)
     }
-  }
+  }, [user, trackingIds, removeFromTracking, addToTracking])
 
-  const isTracking = (productId: string) => {
+  const isTracking = useCallback((productId: string) => {
     return trackingIds.includes(productId)
-  }
+  }, [trackingIds])
 
   const clearAllTracking = () => {
     if (!user) return

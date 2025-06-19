@@ -43,18 +43,6 @@
       ]
     },
     {
-      "name": "Супермаркети",
-      "short_name": "Супермаркети",
-      "description": "Преглед на супермаркети",
-      "url": "/bg/supermarkets",
-      "icons": [
-        {
-          "src": "/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
       "name": "Дискусии",
       "short_name": "Дискусии",
       "description": "Участие в дискусии",

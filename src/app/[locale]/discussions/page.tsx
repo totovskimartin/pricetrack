@@ -151,33 +151,50 @@ export default function DiscussionsPage() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
+          <p className="text-gray-600 mb-4">За да видите дискусиите, моля влезте в профила си.</p>
+          <Link href="/bg/login">
+            <Button>Вход</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-4 lg:pt-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-            <MessageSquare className="h-8 w-8 text-blue-600" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center space-x-3">
+            <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             <span>Дискусии</span>
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Обсъждайте цени, продукти и споделяйте съвети за пазаруване
           </p>
         </div>
         {user && (
-          <Link href="/bg/discussions/new">
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Нова дискусия
-            </Button>
-          </Link>
+          <div className="flex-shrink-0">
+            <Link href="/bg/discussions/new">
+              <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Нова дискусия
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
       {/* Filters and Search */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Търсене</label>
               <div className="relative">
@@ -260,10 +277,10 @@ export default function DiscussionsPage() {
         ) : (
           filteredDiscussions.map((discussion) => (
             <Card key={discussion.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <Badge className={getCategoryColor(discussion.category)}>
                         {discussion.category}
                       </Badge>
@@ -283,25 +300,25 @@ export default function DiscussionsPage() {
                       {discussion.content.length > 200 && '...'}
                     </p>
                     
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
-                        <User className="h-4 w-4" />
-                        <span>
+                        <User className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate max-w-[120px] sm:max-w-none">
                           {discussion.created_by_user?.full_name ||
                            discussion.created_by_user?.email ||
                            'Анонимен'}
                         </span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <MessageCircle className="h-4 w-4" />
+                        <MessageCircle className="h-4 w-4 flex-shrink-0" />
                         <span>{discussion.comment_count || 0} коментара</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 flex-shrink-0" />
                         <span>{discussion.views || 0} прегледа</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Heart className="h-4 w-4" />
+                        <Heart className="h-4 w-4 flex-shrink-0" />
                         <span>{discussion.like_count || 0} харесвания</span>
                       </div>
                     </div>
@@ -313,28 +330,7 @@ export default function DiscussionsPage() {
         )}
       </div>
 
-      {/* Call to Action for Non-Authenticated Users */}
-      {!user && (
-        <Card className="mt-8 bg-blue-50 border-blue-200">
-          <CardContent className="text-center py-8">
-            <MessageSquare className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Присъединете се към общността
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Влезте в профила си, за да участвате в дискусии и споделяте мнения
-            </p>
-            <div className="space-x-2">
-              <Link href="/bg/login">
-                <Button>Вход</Button>
-              </Link>
-              <Link href="/bg/register">
-                <Button variant="outline">Регистрация</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
     </div>
   )
 }

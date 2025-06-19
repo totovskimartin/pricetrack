@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { emailService } from '@/lib/email-notifications'
-import { Search, Plus, Save, AlertCircle, CheckCircle } from 'lucide-react'
+import { Search, Plus, Save, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 
 interface Product {
   id: string
@@ -229,6 +230,12 @@ export default function PriceUpdatesPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
+          <Link href="/bg/admin">
+            <Button variant="outline" size="sm" className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Обратно към админ панела
+            </Button>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Ръчно обновяване на цени
           </h1>

@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Settings, 
-  ArrowLeft, 
-  User, 
+import { AvatarUpload } from '@/components/ui/avatar-upload'
+import {
+  Settings,
+  ArrowLeft,
+  User,
   Save,
   Loader2,
   CheckCircle,
@@ -50,7 +51,7 @@ export default function SettingsPage() {
   const [username, setUsername] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>('')
 
   useEffect(() => {
     if (user) {
@@ -70,7 +71,7 @@ export default function SettingsPage() {
         setUsername(userProfile.username || '')
         setFirstName(userProfile.first_name || '')
         setLastName(userProfile.last_name || '')
-        setAvatarUrl(userProfile.avatar_url || '')
+        setAvatarUrl(userProfile.avatar_url || null)
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
@@ -140,7 +141,7 @@ export default function SettingsPage() {
           full_name: firstName.trim() && lastName.trim() 
             ? `${firstName.trim()} ${lastName.trim()}` 
             : (firstName.trim() || lastName.trim() || null),
-          avatar_url: avatarUrl.trim() || null,
+          avatar_url: avatarUrl?.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id)
@@ -160,7 +161,7 @@ export default function SettingsPage() {
         full_name: firstName.trim() && lastName.trim() 
           ? `${firstName.trim()} ${lastName.trim()}` 
           : (firstName.trim() || lastName.trim() || null),
-        avatar_url: avatarUrl.trim() || null
+        avatar_url: avatarUrl?.trim() || null
       }
       setProfile(updatedProfile)
 
@@ -207,29 +208,29 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
       <ConfirmationComponent />
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <Link href="/bg/dashboard">
-              <Button variant="ghost">
+              <Button variant="ghost" className="w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Обратно към началото
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-2">
-                <Settings className="h-8 w-8 text-blue-600" />
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center sm:justify-start space-x-2">
+                <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                 <span>Настройки на профила</span>
               </h1>
-              <p className="text-gray-600 mt-1">Управлявайте информацията за вашия профил</p>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">Управлявайте информацията за вашия профил</p>
             </div>
           </div>
           {profile && (
             <Link href={`/bg/profile/${profile.username}`}>
-              <Button variant="outline">
+              <Button variant="outline" className="w-full lg:w-auto">
                 <User className="h-4 w-4 mr-2" />
                 Виж профил
               </Button>
@@ -253,67 +254,63 @@ export default function SettingsPage() {
               </Alert>
             )}
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Потребителско име *</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="ivan_petrov"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={saving}
-                />
-                <p className="text-xs text-gray-500">
-                  3-20 символа, само букви, цифри и долна черта. Това е вашият уникален идентификатор.
-                </p>
-              </div>
+            <div className="space-y-6">
+              {/* Profile Picture at the top */}
+              <AvatarUpload
+                currentAvatarUrl={avatarUrl}
+                onAvatarChange={setAvatarUrl}
+                disabled={saving}
+                size="lg"
+              />
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Form Fields */}
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Име</Label>
+                  <Label htmlFor="username">Потребителско име *</Label>
                   <Input
-                    id="firstName"
+                    id="username"
                     type="text"
-                    placeholder="Иван"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="ivan_petrov"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     disabled={saving}
                   />
+                  <p className="text-xs text-gray-500">
+                    3-20 символа, само букви, цифри и долна черта. Това е вашият уникален идентификатор.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Фамилия</Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="Петров"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="avatarUrl">URL на аватар</Label>
-                <Input
-                  id="avatarUrl"
-                  type="url"
-                  placeholder="https://example.com/avatar.jpg"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  disabled={saving}
-                />
-                <p className="text-xs text-gray-500">
-                  Опционално. Линк към изображение за вашия аватар.
-                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Име</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Иван"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Фамилия</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Петров"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             <Separator />
 
-            <div className="flex justify-end">
-              <Button onClick={handleSave} disabled={saving}>
+            <div className="flex justify-center sm:justify-end">
+              <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

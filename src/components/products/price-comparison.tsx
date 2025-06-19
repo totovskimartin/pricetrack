@@ -148,11 +148,11 @@ export function PriceComparison({ product }: PriceComparisonProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
                 {lowestPriceComparison && formatPrice(
-                  lowestPriceComparison.latestPrice.price, 
+                  lowestPriceComparison.latestPrice.price,
                   lowestPriceComparison.latestPrice.currency
                 )}
               </div>
@@ -163,7 +163,7 @@ export function PriceComparison({ product }: PriceComparisonProps) {
             </div>
 
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-xl sm:text-2xl font-bold text-red-600">
                 {comparisons.length > 0 && formatPrice(
                   comparisons[comparisons.length - 1].latestPrice.price,
                   comparisons[comparisons.length - 1].latestPrice.currency
@@ -176,7 +176,7 @@ export function PriceComparison({ product }: PriceComparisonProps) {
             </div>
 
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 {lowestPriceComparison && comparisons.length > 1 && formatPrice(
                   getPriceDifference(
                     comparisons[comparisons.length - 1].latestPrice.price,
@@ -187,7 +187,7 @@ export function PriceComparison({ product }: PriceComparisonProps) {
               </div>
               <div className="text-sm text-gray-600">Разлика</div>
               <div className="text-xs text-gray-500 mt-1">
-                {lowestPriceComparison && comparisons.length > 1 && 
+                {lowestPriceComparison && comparisons.length > 1 &&
                   `${getPriceDifference(
                     comparisons[comparisons.length - 1].latestPrice.price,
                     lowestPriceComparison.latestPrice.price
@@ -211,61 +211,61 @@ export function PriceComparison({ product }: PriceComparisonProps) {
 
           return (
             <Card key={comparison.supermarket.id} className={`${isLowest ? 'ring-2 ring-green-500' : ''}`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center space-x-4">
                     {/* Supermarket Logo */}
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                       {comparison.supermarket.logo_url && (
                         <img
                           src={comparison.supermarket.logo_url}
                           alt={comparison.supermarket.name}
-                          className="w-16 h-16 object-contain"
+                          className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
                         />
                       )}
                       {isLowest && (
-                        <Crown className="absolute -top-2 -right-2 h-6 w-6 text-yellow-500" />
+                        <Crown className="absolute -top-2 -right-2 h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
                       )}
                     </div>
 
                     {/* Supermarket Info */}
-                    <div>
-                      <h4 className="text-lg font-semibold flex items-center">
-                        {comparison.supermarket.name}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-semibold flex flex-wrap items-center gap-2">
+                        <span className="truncate">{comparison.supermarket.name}</span>
                         {isLowest && (
-                          <Badge variant="default" className="ml-2 bg-green-600">
+                          <Badge variant="default" className="bg-green-600 text-xs">
                             Най-ниска цена
                           </Badge>
                         )}
                       </h4>
                       {comparison.supermarket.location && (
                         <div className="flex items-center text-gray-500 text-sm mt-1">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {comparison.supermarket.location}
+                          <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                          <span className="truncate">{comparison.supermarket.location}</span>
                         </div>
                       )}
                       <div className="flex items-center text-gray-500 text-sm mt-1">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Обновено: {new Date(comparison.lastUpdated).toLocaleDateString('bg-BG')}
+                        <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                        <span>Обновено: {new Date(comparison.lastUpdated).toLocaleDateString('bg-BG')}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Price Info */}
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-center sm:text-right flex-shrink-0">
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900">
                       {formatPrice(comparison.latestPrice.price, comparison.latestPrice.currency)}
                     </div>
-                    
+
                     {priceDiff && priceDiff.absolute > 0 && (
                       <div className="text-sm text-red-600 mt-1">
-                        +{formatPrice(priceDiff.absolute, comparison.latestPrice.currency)} 
+                        +{formatPrice(priceDiff.absolute, comparison.latestPrice.currency)}
                         ({priceDiff.percentage.toFixed(1)}%)
                       </div>
                     )}
 
                     {isLowest && (
-                      <Badge variant="default" className="mt-2 bg-green-600">
+                      <Badge variant="default" className="mt-2 bg-green-600 text-xs">
                         Най-добра цена
                       </Badge>
                     )}
@@ -273,20 +273,20 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                 </div>
 
                 {/* Additional Stats */}
-                <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-4 text-sm">
-                  <div>
+                <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                  <div className="text-center sm:text-left">
                     <div className="text-gray-600">Най-ниска историческа</div>
                     <div className="font-semibold">
                       {formatPrice(comparison.lowestPrice.price, comparison.lowestPrice.currency)}
                     </div>
                   </div>
-                  <div>
+                  <div className="text-center sm:text-left">
                     <div className="text-gray-600">Средна цена</div>
                     <div className="font-semibold">
                       {formatPrice(comparison.averagePrice, comparison.latestPrice.currency)}
                     </div>
                   </div>
-                  <div>
+                  <div className="text-center sm:text-left">
                     <div className="text-gray-600">Брой записи</div>
                     <div className="font-semibold">{comparison.priceCount}</div>
                   </div>
@@ -294,17 +294,17 @@ export function PriceComparison({ product }: PriceComparisonProps) {
 
                 {/* Price Trend */}
                 <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <span className="text-sm text-gray-600">Тенденция на цената:</span>
                     <div className="flex items-center">
                       {comparison.latestPrice.price > comparison.averagePrice ? (
                         <div className="flex items-center text-red-600 text-sm">
-                          <TrendingUp className="h-4 w-4 mr-1" />
+                          <TrendingUp className="h-4 w-4 mr-1 flex-shrink-0" />
                           Над средната
                         </div>
                       ) : comparison.latestPrice.price < comparison.averagePrice ? (
                         <div className="flex items-center text-green-600 text-sm">
-                          <TrendingDown className="h-4 w-4 mr-1" />
+                          <TrendingDown className="h-4 w-4 mr-1 flex-shrink-0" />
                           Под средната
                         </div>
                       ) : (

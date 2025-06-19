@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { canAccessAdminPanel, getPendingApprovalsCount } from '@/lib/admin'
 import { useUnreadNotificationCount } from '@/hooks/use-notifications'
+import { MobileHeader } from './mobile-header'
 import {
   Home,
   ShoppingCart,
@@ -17,8 +18,6 @@ import {
   User,
   Settings,
   LogOut,
-  Menu,
-  X,
   BarChart3,
   Heart,
   Bell,
@@ -67,7 +66,7 @@ export function SidebarNavigation() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, email, username, full_name, role')
+        .select('id, email, username, full_name, first_name, last_name, avatar_url, role')
         .eq('id', user.id)
         .single()
 
@@ -107,12 +106,6 @@ export function SidebarNavigation() {
       href: '/bg/products',
       icon: ShoppingCart,
       description: 'Търсене на продукти'
-    },
-    {
-      name: 'Супермаркети',
-      href: '/bg/supermarkets',
-      icon: Store,
-      description: 'Магазини и вериги'
     },
     {
       name: 'Дискусии',
@@ -161,30 +154,34 @@ export function SidebarNavigation() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden cursor-pointer bg-white shadow-lg border-gray-200 hover:bg-gray-50"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+      {/* Mobile Header */}
+      <MobileHeader
+        isMenuOpen={isOpen}
+        onMenuToggle={() => setIsOpen(!isOpen)}
+      />
 
       {/* Transparent Overlay for mobile - allows closing by clicking outside */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-0 z-30 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`
-        fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto
-      `}>
+      <div
+        className={`
+          fixed left-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
+          mobile-sidebar lg:desktop-sidebar
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:static lg:z-auto
+        `}
+        style={{
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
@@ -205,30 +202,84 @@ export function SidebarNavigation() {
 
           {/* User Info */}
           {user && (
-            <div className="p-4 border-b border-gray-100 bg-gray-50">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {userProfile?.username ? (
-                    <Link
-                      href={`/bg/profile/${userProfile.username}`}
-                      onClick={() => setIsOpen(false)}
-                      className="block"
-                    >
-                      <p className="text-sm font-medium text-blue-600 hover:text-blue-700 truncate cursor-pointer">
-                        @{userProfile.username}
+            <div className="border-b border-gray-100 bg-gray-50">
+              {userProfile?.username ? (
+                <Link
+                  href={`/bg/profile/${userProfile.username}`}
+                  onClick={() => setIsOpen(false)}
+                  className="block p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 relative">
+                      {userProfile.avatar_url ? (
+                        <img
+                          src={userProfile.avatar_url}
+                          alt="Профилна снимка"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ${userProfile.avatar_url ? 'hidden' : ''}`}>
+                        <User className="h-5 w-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-blue-600 hover:text-blue-700 truncate">
+                        {(() => {
+                          // Try first_name + last_name combination
+                          if (userProfile.first_name || userProfile.last_name) {
+                            const firstName = userProfile.first_name?.trim() || ''
+                            const lastName = userProfile.last_name?.trim() || ''
+                            const fullName = `${firstName} ${lastName}`.trim()
+                            if (fullName) return fullName
+                          }
+
+                          // Try full_name
+                          if (userProfile.full_name?.trim()) {
+                            return userProfile.full_name.trim()
+                          }
+
+                          // Fallback to @username
+                          return `@${userProfile.username}`
+                        })()}
                       </p>
-                    </Link>
-                  ) : (
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {user.user_metadata?.full_name || user.email?.split('@')[0] || 'Потребител'}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                </Link>
+              ) : (
+                <div className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 relative">
+                      {userProfile?.avatar_url ? (
+                        <img
+                          src={userProfile.avatar_url}
+                          alt="Профилна снимка"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ${userProfile?.avatar_url ? 'hidden' : ''}`}>
+                        <User className="h-5 w-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {user.user_metadata?.full_name || user.email?.split('@')[0] || 'Потребител'}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { AvatarUpload } from '@/components/ui/avatar-upload'
 import {
   Dialog,
   DialogContent,
@@ -23,10 +24,10 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { 
-  User, 
-  Save, 
-  Loader2, 
+import {
+  User,
+  Save,
+  Loader2,
   AlertCircle,
   Shield,
   Calendar,
@@ -58,7 +59,7 @@ export function UserEditModal({
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>('')
   const [role, setRole] = useState<'user' | 'moderator' | 'admin' | 'super_admin'>('user')
   const [isActive, setIsActive] = useState(true)
 
@@ -69,7 +70,7 @@ export function UserEditModal({
       setEmail(user.email || '')
       setFirstName(user.first_name || '')
       setLastName(user.last_name || '')
-      setAvatarUrl(user.avatar_url || '')
+      setAvatarUrl(user.avatar_url || null)
       setRole(user.role || 'user')
       setIsActive(user.is_active ?? true)
       setError('')
@@ -164,7 +165,7 @@ export function UserEditModal({
           full_name: firstName.trim() && lastName.trim() 
             ? `${firstName.trim()} ${lastName.trim()}` 
             : (firstName.trim() || lastName.trim() || null),
-          avatar_url: avatarUrl.trim() || null,
+          avatar_url: avatarUrl?.trim() || null,
           role: role,
           is_active: isActive,
           updated_at: new Date().toISOString()
@@ -324,17 +325,12 @@ export function UserEditModal({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="avatarUrl">URL на аватар</Label>
-              <Input
-                id="avatarUrl"
-                type="url"
-                placeholder="https://example.com/avatar.jpg"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                disabled={loading}
-              />
-            </div>
+            <AvatarUpload
+              currentAvatarUrl={avatarUrl}
+              onAvatarChange={setAvatarUrl}
+              disabled={loading}
+              size="md"
+            />
 
             <Separator />
 

@@ -10,10 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, Filter, TrendingUp, TrendingDown, Minus, MessageCircle, Heart, Eye, Plus, Grid, List } from 'lucide-react'
+import { Search, Filter, TrendingUp, TrendingDown, Minus, MessageCircle, Heart, Eye, Plus, Grid, List, ShoppingCart, HelpCircle } from 'lucide-react'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { useProductListStats } from '@/hooks/use-product-stats'
 import { useAuth } from '@/components/providers/auth-provider'
+import { TourGuide, useTour } from '@/components/ui/tour-guide'
 
 interface Product {
   id: string
@@ -55,6 +56,55 @@ export default function ProductsPage() {
   const router = useRouter()
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const { user } = useAuth()
+
+  // Tour guide for first-time users (show for all users, but content varies)
+  const { isOpen: isTourOpen, setIsOpen: setIsTourOpen, completeTour } = useTour('products_page', !loading)
+
+  // Tour steps (conditional based on user authentication)
+  const tourSteps = [
+    {
+      id: 'welcome',
+      title: 'Добре дошли в Продукти!',
+      description: 'Тук можете да търсите и сравнявате цени на хиляди продукти от различни супермаркети в България.',
+      icon: <Search className="h-5 w-5 text-blue-600" />
+    },
+    {
+      id: 'search',
+      title: 'Търсене на продукти',
+      description: 'Използвайте търсачката, за да намерите продукти по име, марка или описание.',
+      target: 'input[placeholder*="Търсете продукти"]',
+      position: 'bottom' as const,
+      icon: <Search className="h-5 w-5 text-blue-600" />
+    },
+    {
+      id: 'filters',
+      title: 'Филтриране',
+      description: 'Филтрирайте продуктите по категория и супермаркет, за да намерите точно това, което търсите.',
+      target: '.multi-select-trigger',
+      position: 'bottom' as const,
+      icon: <Filter className="h-5 w-5 text-blue-600" />
+    },
+    ...(user ? [{
+      id: 'add_product',
+      title: 'Добавете нов продукт',
+      description: 'Не намирате продукта, който търсите? Добавете го сами! Това помага на цялата общност.',
+      target: 'a[href="/bg/products/new"]',
+      position: 'left' as const,
+      icon: <Plus className="h-5 w-5 text-green-600" />,
+      action: {
+        text: 'Добави продукт сега',
+        onClick: () => {
+          completeTour()
+          router.push('/bg/products/new')
+        }
+      }
+    }] : [{
+      id: 'login_prompt',
+      title: 'Влезте в профила си',
+      description: 'За да добавяте продукти, следите цени и участвате в дискусии, влезте в профила си или се регистрирайте.',
+      icon: <Plus className="h-5 w-5 text-blue-600" />
+    }])
+  ]
 
   // Get product IDs for stats
   const productIds = allProducts.map(p => p.id)
@@ -331,14 +381,50 @@ export default function ProductsPage() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
+          <p className="text-gray-600 mb-4">За да видите продуктите, моля влезте в профила си.</p>
+          <Link href="/bg/login">
+            <Button>Вход</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Tour Guide */}
+      <TourGuide
+        steps={tourSteps}
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onComplete={completeTour}
+        title="Добре дошли в Продукти!"
+        description="Нека ви покажем как да използвате тази страница"
+      />
+
       {/* Page Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Продукти</h1>
-            <p className="text-gray-600">Търсете и сравнявайте цени на продукти</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Продукти</h1>
+              <p className="text-gray-600">Търсете и сравнявайте цени на продукти</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsTourOpen(true)}
+              className="hidden sm:flex items-center space-x-2"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Покажи обиколката</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -369,7 +455,7 @@ export default function ProductsPage() {
                   selected={selectedCategories}
                   onChange={setSelectedCategories}
                   placeholder="Категории"
-                  className="w-full sm:w-48"
+                  className="w-full sm:w-48 multi-select-trigger"
                 />
 
                 <MultiSelect
@@ -535,8 +621,7 @@ export default function ProductsPage() {
                     <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900 hidden sm:table-cell">Марка</th>
                     <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900 hidden md:table-cell">Категория</th>
                     <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900">Цена</th>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900 hidden lg:table-cell">Супермаркет</th>
-                    <th className="text-center py-3 px-2 sm:px-4 font-medium text-gray-900 hidden xl:table-cell">Статистики</th>
+                    <th className="text-center py-3 px-2 sm:px-4 font-medium text-gray-900 hidden lg:table-cell">Статистики</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -591,9 +676,6 @@ export default function ProductsPage() {
                               <div className="text-xs text-gray-500">
                                 {formatPriceWithEUR(latestPrice.price).eur}
                               </div>
-                              <div className="text-xs text-gray-500 lg:hidden">
-                                {latestPrice.supermarket.name}
-                              </div>
                               {priceChange && priceChange.type !== 'same' && (
                                 <div className={`flex items-center text-xs mt-1 ${
                                   priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
@@ -612,9 +694,6 @@ export default function ProductsPage() {
                           )}
                         </td>
                         <td className="py-3 px-2 sm:px-4 hidden lg:table-cell">
-                          <span className="text-gray-900 text-sm">{latestPrice?.supermarket.name || '-'}</span>
-                        </td>
-                        <td className="py-3 px-2 sm:px-4 hidden xl:table-cell">
                           <div className="flex items-center justify-center space-x-2 sm:space-x-4 text-sm text-gray-500">
                             <div className="flex items-center">
                               <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />

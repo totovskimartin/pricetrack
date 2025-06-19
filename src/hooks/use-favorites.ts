@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { supabase } from '@/lib/supabase'
 
@@ -33,7 +33,7 @@ export function useFavorites() {
     }
   }, [user])
 
-  const fetchUserFavorites = async () => {
+  const fetchUserFavorites = useCallback(async () => {
     if (!user) return
 
     try {
@@ -63,18 +63,9 @@ export function useFavorites() {
       const localFavorites = JSON.parse(localStorage.getItem(`favorites_${user.id}`) || '[]')
       setFavorites(localFavorites)
     }
-  }
+  }, [user])
 
-  // Fetch product details for favorites
-  useEffect(() => {
-    if (favorites.length > 0) {
-      fetchFavoriteProducts()
-    } else {
-      setFavoriteProducts([])
-    }
-  }, [favorites])
-
-  const fetchFavoriteProducts = async () => {
+  const fetchFavoriteProducts = useCallback(async () => {
     if (!favorites.length) return
 
     setLoading(true)
@@ -135,9 +126,18 @@ export function useFavorites() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [favorites])
 
-  const addToFavorites = async (productId: string) => {
+  // Fetch product details for favorites
+  useEffect(() => {
+    if (favorites.length > 0) {
+      fetchFavoriteProducts()
+    } else {
+      setFavoriteProducts([])
+    }
+  }, [favorites, fetchFavoriteProducts])
+
+  const addToFavorites = useCallback(async (productId: string) => {
     if (!user) return false
 
     try {
@@ -176,9 +176,9 @@ export function useFavorites() {
       setFavorites(newFavorites)
       return true
     }
-  }
+  }, [user, favorites])
 
-  const removeFromFavorites = async (productId: string) => {
+  const removeFromFavorites = useCallback(async (productId: string) => {
     if (!user) return false
 
     try {
@@ -212,9 +212,9 @@ export function useFavorites() {
       setFavorites(newFavorites)
       return true
     }
-  }
+  }, [user, favorites])
 
-  const toggleFavorite = async (productId: string) => {
+  const toggleFavorite = useCallback(async (productId: string) => {
     if (!user) return false
 
     const isFavoriteNow = favorites.includes(productId)
@@ -224,11 +224,11 @@ export function useFavorites() {
     } else {
       return await addToFavorites(productId)
     }
-  }
+  }, [user, favorites, removeFromFavorites, addToFavorites])
 
-  const isFavorite = (productId: string) => {
+  const isFavorite = useCallback((productId: string) => {
     return favorites.includes(productId)
-  }
+  }, [favorites])
 
   const clearAllFavorites = () => {
     if (!user) return

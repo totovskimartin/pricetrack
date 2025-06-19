@@ -38,6 +38,11 @@ import UsersManagement from '@/components/admin/users-management'
 import SettingsManagement from '@/components/admin/settings-management'
 import AlertsManagement from '@/components/admin/alerts-management'
 import NewsManagement from '@/components/admin/news-management'
+import { MobileAdminLayout } from '@/components/admin/mobile-admin-layout'
+import { MobileAdminDashboard } from '@/components/admin/mobile-admin-dashboard'
+import { MobileUsersManagement } from '@/components/admin/mobile-users-management'
+import { MobileProductsManagement } from '@/components/admin/mobile-products-management'
+import { MobileDiscussionsModeration } from '@/components/admin/mobile-discussions-moderation'
 import { useConfirmation } from '@/hooks/use-confirmation'
 import { useAdminNotifications } from '@/hooks/use-admin-notifications'
 
@@ -46,6 +51,7 @@ interface AdminStats {
   totalProducts: number
   totalSupermarkets: number
   totalDiscussions: number
+  totalAlerts: number
   pendingApprovals: number
   activeUsers: number
   recentActivity: any[]
@@ -76,9 +82,21 @@ function AdminDashboard() {
   const [pendingPriceSuggestions, setPendingPriceSuggestions] = useState(0)
   const [pendingProducts, setPendingProducts] = useState(0)
   const [pendingDiscussions, setPendingDiscussions] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Get unread notifications count for alerts tab
   const { unreadCount } = useAdminNotifications(user?.role)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Initialize active tab from URL parameter
   useEffect(() => {
@@ -199,6 +217,7 @@ function AdminDashboard() {
             totalProducts: 0,
             totalSupermarkets: 0,
             totalDiscussions: 0,
+            totalAlerts: 0,
             pendingApprovals: 0,
             activeUsers: 0,
             recentActivity: []
@@ -443,36 +462,97 @@ function AdminDashboard() {
     )
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <MobileAdminLayout
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        user={user}
+        pendingCounts={{
+          pendingProducts,
+          pendingDiscussions,
+          unreadCount,
+          pendingPriceSuggestions
+        }}
+        stats={stats}
+        permissions={{
+          canManageProducts,
+          canManageSupermarkets,
+          canModerateDiscussions,
+          canManageUsers
+        }}
+      >
+        <ConfirmationComponent />
+
+        {/* Dashboard Content - handled by navigation cards in mobile layout */}
+
+        {/* Users Content */}
+        {activeTab === 'users' && canManageUsers && (
+          <UsersManagement />
+        )}
+
+        {/* Products Content */}
+        {activeTab === 'products' && canManageProducts && (
+          <ProductsManagement />
+        )}
+
+        {/* Supermarkets Content */}
+        {activeTab === 'supermarkets' && canManageSupermarkets && (
+          <SupermarketsManagement />
+        )}
+
+        {/* Discussions Content */}
+        {activeTab === 'discussions' && canModerateDiscussions && (
+          <DiscussionsModeration />
+        )}
+
+        {activeTab === 'alerts' && (
+          <AlertsManagement />
+        )}
+
+        {activeTab === 'news' && (
+          <NewsManagement />
+        )}
+
+        {activeTab === 'settings' && user.role === 'super_admin' && (
+          <SettingsManagement />
+        )}
+      </MobileAdminLayout>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="min-h-screen bg-gray-50">
       <ConfirmationComponent />
 
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 pt-20 lg:pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <Link href="/bg/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Обратно към сайта
+                  <span className="hidden sm:inline">Обратно към сайта</span>
+                  <span className="sm:hidden">Назад</span>
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                  <Shield className="h-6 w-6 text-blue-600" />
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center justify-center sm:justify-start space-x-2">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   <span>Администрация</span>
                 </h1>
-                {/* <p className="text-gray-600 text-sm">Управление на системата и съдържанието</p> */}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">
+            <div className="flex items-center justify-center sm:justify-end space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-semibold text-xs sm:text-sm">
                   {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div>
+              <div className="text-center sm:text-left">
                 <p className="font-medium text-gray-900 text-sm">{user.full_name || 'Admin'}</p>
                 <Badge variant={user.role === 'super_admin' ? 'default' : 'secondary'} className="text-xs">
                   {user.role}
@@ -486,7 +566,7 @@ function AdminDashboard() {
       {/* Main Layout with Sidebar */}
       <div className="flex">
         {/* Vertical Navigation Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r min-h-screen">
+        <div className="hidden lg:block w-64 bg-white shadow-sm border-r min-h-screen">
           <div className="p-4">
             <nav className="space-y-2">
               {/* Dashboard */}
@@ -658,14 +738,34 @@ function AdminDashboard() {
           </div>
         </div>
 
+        {/* Mobile Navigation */}
+        <div className="lg:hidden bg-white border-b shadow-sm">
+          <div className="px-4 py-3">
+            <select
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm"
+            >
+              <option value="dashboard">📊 Табло</option>
+              {canManageProducts && <option value="products">📦 Продукти {pendingProducts > 0 ? `(${pendingProducts})` : ''}</option>}
+              {canManageSupermarkets && <option value="supermarkets">🏪 Супермаркети</option>}
+              {canModerateDiscussions && <option value="discussions">💬 Дискусии {pendingDiscussions > 0 ? `(${pendingDiscussions})` : ''}</option>}
+              {canManageUsers && <option value="users">👥 Потребители</option>}
+              <option value="alerts">🔔 Известия {unreadCount > 0 ? `(${unreadCount})` : ''}</option>
+              <option value="news">📰 Новини</option>
+              {user.role === 'super_admin' && <option value="settings">⚙️ Настройки</option>}
+            </select>
+          </div>
+        </div>
+
         {/* Main Content Area */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 lg:p-6">
 
           {/* Dashboard Content */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <Card className="bg-white shadow-sm border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Потребители</CardTitle>
@@ -738,13 +838,13 @@ function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {pendingItems.slice(0, 5).map((item) => (
-                      <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                      <div key={`${item.type}-${item.id}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                         <Link
                           href={getItemUrl(item)}
-                          className="flex-1 cursor-pointer"
+                          className="flex-1 cursor-pointer min-w-0"
                           target="_blank"
                         >
-                          <div className="flex items-center space-x-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
                             <Badge className={getTypeColor(item.type)}>
                               {getTypeLabel(item.type)}
                             </Badge>
@@ -752,14 +852,14 @@ function AdminDashboard() {
                               {formatDate(item.created_at)}
                             </span>
                           </div>
-                          <p className="font-medium text-sm hover:text-blue-600 transition-colors">{item.title}</p>
+                          <p className="font-medium text-sm hover:text-blue-600 transition-colors truncate">{item.title}</p>
                           {item.created_by_user && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 truncate">
                               от {item.created_by_user.full_name || item.created_by_user.email}
                             </p>
                           )}
                         </Link>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-center sm:justify-end space-x-2 flex-shrink-0">
                           <Button
                             size="sm"
                             variant="outline"

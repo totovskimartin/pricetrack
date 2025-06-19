@@ -48,20 +48,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Euro Adoption Notice */}
-        <div className="mt-12 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <div className="flex items-center">
-            <Euro className="h-8 w-8 text-yellow-600" />
-            <div className="ml-3">
-              <h3 className="text-lg font-medium text-yellow-800">
-                Дата на приемане на Евро: 1 януари 2026 г.
-              </h3>
-              <p className="mt-2 text-sm text-yellow-700">
-                Следете промените в цените на продуктите преди и след преминаването към Евро.
-              </p>
-            </div>
-          </div>
-        </div>
+
 
         {/* Features */}
         <div className="mt-16">

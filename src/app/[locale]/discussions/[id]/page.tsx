@@ -612,6 +612,21 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
     )
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
+          <p className="text-gray-600 mb-4">За да видите дискусиите, моля влезте в профила си.</p>
+          <Link href="/bg/login">
+            <Button>Вход</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   if (!discussion) {
     return (
       <div className="container mx-auto px-4 py-8">

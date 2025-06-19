@@ -48,12 +48,28 @@ export default function NewDiscussionPage() {
   const [submitted, setSubmitted] = useState(false)
   const [discussionData, setDiscussionData] = useState<any>(null)
   const [needsApproval, setNeedsApproval] = useState(true)
+  const [requiresApproval, setRequiresApproval] = useState(true)
 
-  // Redirect if not authenticated
+  // Check approval setting and redirect if not authenticated
   useEffect(() => {
     if (!user) {
       router.push('/bg/login')
+      return
     }
+
+    // Load the approval setting
+    const loadApprovalSetting = async () => {
+      try {
+        const approvalRequired = await discussionsRequireApproval()
+        setRequiresApproval(approvalRequired)
+      } catch (error) {
+        console.error('Error loading approval setting:', error)
+        // Default to requiring approval on error
+        setRequiresApproval(true)
+      }
+    }
+
+    loadApprovalSetting()
   }, [user, router])
 
   if (!user) {
@@ -239,13 +255,15 @@ export default function NewDiscussionPage() {
           </div>
         </div>
 
-        <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Предложените дискусии ще бъдат прегледани от нашия екип преди да бъдат публикувани.
-            Моля, спазвайте правилата на общността и бъдете уважителни към другите потребители.
-          </AlertDescription>
-        </Alert>
+        {requiresApproval && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Предложените дискусии ще бъдат прегледани от нашия екип преди да бъдат публикувани.
+              Моля, спазвайте правилата на общността и бъдете уважителни към другите потребители.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>
@@ -306,65 +324,7 @@ export default function NewDiscussionPage() {
               <div className="flex items-center space-x-4 pt-4">
                 <Button type="submit" disabled={loading || !form.title || !form.category || !form.content}>
                   <Save className="h-4 w-4 mr-2" />
-                  {loading ? 'Изпращане...' : 'Изпрати за одобрение'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    console.log('Testing database schema...')
-                    console.log('Current form data:', form)
-
-                    // Test if we can query the discussions table
-                    const { data, error } = await supabase
-                      .from('discussions')
-                      .select('category')
-                      .limit(5)
-
-                    console.log('Existing categories in DB:', data?.map(d => d.category))
-                    console.log('Query error details:', {
-                      message: error?.message,
-                      details: error?.details,
-                      hint: error?.hint,
-                      code: error?.code
-                    })
-
-                    // Test the constraint
-                    const testData = {
-                      title: 'Test Title',
-                      slug: 'test-slug',
-                      content: 'Test content for validation',
-                      category: form.category || 'Общи',
-                      is_approved: false,
-                      created_by: user?.id
-                    }
-
-                    console.log('Testing with data:', testData)
-
-                    const { data: testResult, error: testError } = await supabase
-                      .from('discussions')
-                      .insert(testData)
-                      .select()
-
-                    console.log('Test result:', testResult)
-                    console.log('Test error details:', {
-                      message: testError?.message,
-                      details: testError?.details,
-                      hint: testError?.hint,
-                      code: testError?.code
-                    })
-
-                    if (testResult && testResult[0]) {
-                      // Clean up test data
-                      await supabase
-                        .from('discussions')
-                        .delete()
-                        .eq('id', testResult[0].id)
-                      console.log('Test data cleaned up')
-                    }
-                  }}
-                >
-                  🔍 Test DB
+                  {loading ? 'Изпращане...' : (requiresApproval ? 'Изпрати за одобрение' : 'Изпрати')}
                 </Button>
                 <Link href="/bg/discussions">
                   <Button type="button" variant="outline">

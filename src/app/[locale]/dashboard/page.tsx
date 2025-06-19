@@ -367,11 +367,6 @@ function DashboardContent() {
                   <span className="text-sm font-medium text-center">Дискусии</span>
                   <span className="text-xs text-gray-500 text-center">Общност</span>
                 </Link>
-                <Link href="/bg/supermarkets" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-                  <ShoppingCart className="h-8 w-8 text-orange-500 mb-2" />
-                  <span className="text-sm font-medium text-center">Супермаркети</span>
-                  <span className="text-xs text-gray-500 text-center">Магазини</span>
-                </Link>
                 <Link href="/bg/settings" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
                   <User className="h-8 w-8 text-gray-500 mb-2" />
                   <span className="text-sm font-medium text-center">Настройки</span>

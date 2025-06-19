@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { UserEditModal } from './user-edit-modal'
 import { UserDeleteModal } from './user-delete-modal'
+import { MobileUsersManagement } from './mobile-users-management'
 import { supabase } from '@/lib/supabase'
 import { canDeleteUsers } from '@/lib/admin'
 import { useAuth } from '@/components/providers/auth-provider'
@@ -67,11 +68,23 @@ export default function UsersManagement() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [activityFilter, setActivityFilter] = useState('all')
+  const [isMobile, setIsMobile] = useState(false)
 
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch current user's database record
   const fetchCurrentUser = async () => {
@@ -315,6 +328,55 @@ export default function UsersManagement() {
     }
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <>
+        {ToastComponent}
+        <MobileUsersManagement
+          users={filteredUsers}
+          loading={loading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          activityFilter={activityFilter}
+          setActivityFilter={setActivityFilter}
+          onEditUser={handleEditUser}
+          onDeleteUser={handleDeleteUser}
+          canDeleteUsers={canDeleteUsers}
+          currentUser={currentUser}
+          formatDate={formatDate}
+          formatRelativeTime={formatRelativeTime}
+          getRoleIcon={getRoleIcon}
+          getRoleLabel={getRoleLabel}
+          getRoleBadgeVariant={getRoleBadgeVariant}
+        />
+
+        {/* Edit User Modal */}
+        <UserEditModal
+          user={editingUser}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          onUserUpdated={handleUserUpdated}
+          currentAdminId={currentUser?.id || ''}
+        />
+
+        {/* Delete User Modal */}
+        <UserDeleteModal
+          user={deletingUser}
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          onUserDeleted={handleUserDeleted}
+          currentAdminId={currentUser?.id || ''}
+        />
+      </>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="space-y-6">
       {ToastComponent}
@@ -406,13 +468,13 @@ export default function UsersManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16">Аватар</TableHead>
+                    <TableHead className="w-12 sm:w-16">Аватар</TableHead>
                     <TableHead>Потребител</TableHead>
-                    <TableHead>Роля</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead>Статистики</TableHead>
-                    <TableHead>Регистрация</TableHead>
-                    <TableHead>Последен вход</TableHead>
+                    <TableHead className="hidden sm:table-cell">Роля</TableHead>
+                    <TableHead className="hidden md:table-cell">Статус</TableHead>
+                    <TableHead className="hidden lg:table-cell">Статистики</TableHead>
+                    <TableHead className="hidden lg:table-cell">Регистрация</TableHead>
+                    <TableHead className="hidden xl:table-cell">Последен вход</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -446,29 +508,41 @@ export default function UsersManagement() {
 
                       {/* User Info */}
                       <TableCell>
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0">
                           <div className="flex items-center space-x-2">
-                            {getRoleIcon(u.role)}
-                            <div className="font-medium text-gray-900">
+                            <span className="sm:hidden">{getRoleIcon(u.role)}</span>
+                            <div className="font-medium text-gray-900 truncate">
                               {u.username ? `@${u.username}` : (u.full_name || 'Без име')}
                             </div>
                           </div>
                           {u.full_name && u.username && (
-                            <div className="text-sm text-gray-600">{u.full_name}</div>
+                            <div className="text-sm text-gray-600 truncate">{u.full_name}</div>
                           )}
-                          <div className="text-sm text-gray-500">{u.email}</div>
+                          <div className="text-sm text-gray-500 truncate">{u.email}</div>
+                          {/* Mobile-only role and status */}
+                          <div className="sm:hidden flex flex-wrap gap-1 mt-1">
+                            <Badge variant={getRoleBadgeVariant(u.role)} className="text-xs">
+                              {getRoleLabel(u.role)}
+                            </Badge>
+                            <Badge
+                              variant={u.is_active ? 'default' : 'destructive'}
+                              className={`text-xs ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                            >
+                              {u.is_active ? 'Активен' : 'Неактивен'}
+                            </Badge>
+                          </div>
                         </div>
                       </TableCell>
 
                       {/* Role */}
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant={getRoleBadgeVariant(u.role)} className="text-xs">
                           {getRoleLabel(u.role)}
                         </Badge>
                       </TableCell>
 
                       {/* Status */}
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge
                           variant={u.is_active ? 'default' : 'destructive'}
                           className={`text-xs ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
@@ -478,7 +552,7 @@ export default function UsersManagement() {
                       </TableCell>
 
                       {/* Stats */}
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex items-center space-x-1">
                             <ShoppingCart className="h-3 w-3 text-purple-600" />
@@ -500,7 +574,7 @@ export default function UsersManagement() {
                       </TableCell>
 
                       {/* Registration Date */}
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <div className="text-sm text-gray-500">
                           <div className="flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
@@ -510,7 +584,7 @@ export default function UsersManagement() {
                       </TableCell>
 
                       {/* Last Login Date */}
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         <div className="text-sm text-gray-500">
                           {u.last_login_at ? (
                             <div className="flex items-center" title={formatDate(u.last_login_at)}>
@@ -537,7 +611,7 @@ export default function UsersManagement() {
                               e.stopPropagation()
                               handleEditUser(u)
                             }}
-                            className="text-gray-600 hover:text-gray-700 h-8 w-8 p-0"
+                            className="text-gray-600 hover:text-gray-700 h-8 w-8 p-0 flex-shrink-0"
                             title="Редактирай"
                           >
                             <Edit className="h-4 w-4" />
@@ -552,7 +626,7 @@ export default function UsersManagement() {
                                 e.stopPropagation()
                                 handleDeleteUser(u)
                               }}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0 flex-shrink-0"
                               title="Изтрий потребител"
                             >
                               <Trash2 className="h-4 w-4" />

@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   ArrowLeft, Heart, MessageCircle, TrendingUp, TrendingDown,
-  Eye, Share2, Bell, BellOff, Calendar, MapPin, Send, DollarSign, Plus
+  Eye, Share2, Bell, BellOff, Calendar, MapPin, Send, DollarSign, Plus, ShoppingCart
 } from 'lucide-react'
 import { PriceChart } from '@/components/products/price-chart'
 import { DiscussionSection } from '@/components/products/discussion-section'
@@ -421,6 +421,21 @@ export default function ProductDetailPage() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
+          <p className="text-gray-600 mb-4">За да видите продуктите, моля влезте в профила си.</p>
+          <Link href="/bg/login">
+            <Button>Вход</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -466,22 +481,23 @@ export default function ProductDetailPage() {
       {/* Page Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex items-center space-x-4">
               <Link href="/bg/products" className="flex items-center text-blue-600 hover:text-blue-700 cursor-pointer">
                 <ArrowLeft className="h-5 w-5 mr-2" />
-                Назад към продуктите
+                <span className="hidden sm:inline">Назад към продуктите</span>
+                <span className="sm:hidden">Назад</span>
               </Link>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={shareProduct}
                 className="cursor-pointer"
               >
-                <Share2 className="h-4 w-4 mr-2" />
-                Споделяне
+                <Share2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Споделяне</span>
               </Button>
               {user && (
                 <>
@@ -492,8 +508,10 @@ export default function ProductDetailPage() {
                     disabled={actionLoading}
                     className="cursor-pointer"
                   >
-                    <Heart className={`h-4 w-4 mr-2 ${(userProduct?.is_favorite || isFavorite(product.id)) ? 'fill-current' : ''}`} />
-                    {(userProduct?.is_favorite || isFavorite(product.id)) ? 'Премахни от любими' : 'Добави в любими'}
+                    <Heart className={`h-4 w-4 sm:mr-2 ${(userProduct?.is_favorite || isFavorite(product.id)) ? 'fill-current' : ''}`} />
+                    <span className="hidden sm:inline">
+                      {(userProduct?.is_favorite || isFavorite(product.id)) ? 'Премахни от любими' : 'Добави в любими'}
+                    </span>
                   </Button>
                   <Button
                     variant={(userProduct?.is_tracking || isTracking(product.id)) ? "default" : "outline"}
@@ -503,11 +521,13 @@ export default function ProductDetailPage() {
                     className="cursor-pointer"
                   >
                     {(userProduct?.is_tracking || isTracking(product.id)) ? (
-                      <BellOff className="h-4 w-4 mr-2" />
+                      <BellOff className="h-4 w-4 sm:mr-2" />
                     ) : (
-                      <Bell className="h-4 w-4 mr-2" />
+                      <Bell className="h-4 w-4 sm:mr-2" />
                     )}
-                    {(userProduct?.is_tracking || isTracking(product.id)) ? 'Спри следенето' : 'Следи цената'}
+                    <span className="hidden sm:inline">
+                      {(userProduct?.is_tracking || isTracking(product.id)) ? 'Спри следенето' : 'Следи цената'}
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
@@ -515,8 +535,8 @@ export default function ProductDetailPage() {
                     onClick={() => setShowPriceSuggestionModal(true)}
                     className="cursor-pointer"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Предложи цена
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Предложи цена</span>
                   </Button>
                 </>
               )}
@@ -525,20 +545,20 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 lg:py-8">
         {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
           {/* Product Image - Smaller */}
-          <div className="lg:col-span-1">
+          <div className="md:col-span-1 lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
               {product.image_url ? (
                 <img
                   src={product.image_url}
                   alt={product.name}
-                  className="w-full h-48 object-contain p-4"
+                  className="w-full h-48 sm:h-56 object-contain p-4"
                 />
               ) : (
-                <div className="w-full h-48 flex items-center justify-center bg-gray-50">
+                <div className="w-full h-48 sm:h-56 flex items-center justify-center bg-gray-50">
                   <div className="text-gray-400 text-4xl">📦</div>
                 </div>
               )}
@@ -546,7 +566,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info - 2 columns */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-1 lg:col-span-2">
             {/* Product Header */}
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-2">
@@ -566,7 +586,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-lg font-bold text-gray-900">
                   {product.price_entries.length}
@@ -589,7 +609,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Current Price - Compact */}
-          <div className="lg:col-span-1">
+          <div className="md:col-span-2 lg:col-span-1">
             {latestPrice && (
               <Card className="h-fit">
                 <CardHeader className="pb-3">
@@ -628,12 +648,24 @@ export default function ProductDetailPage() {
         {/* Organized Tabbed Content */}
         <div className="mb-8">
           <Tabs defaultValue="charts" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="charts">📈 Графики</TabsTrigger>
-              <TabsTrigger value="prices">💰 Цени</TabsTrigger>
-              <TabsTrigger value="comments">
-                💬 Коментари {commentCount > 0 && `(${commentCount})`}
-                {!commentsTableExists && <span className="text-red-500 text-xs ml-1">⚠️</span>}
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="charts" className="text-xs sm:text-sm py-2">
+                <span className="hidden sm:inline">📈 Графики</span>
+                <span className="sm:hidden">📈</span>
+              </TabsTrigger>
+              <TabsTrigger value="prices" className="text-xs sm:text-sm py-2">
+                <span className="hidden sm:inline">💰 Цени</span>
+                <span className="sm:hidden">💰</span>
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="text-xs sm:text-sm py-2">
+                <span className="hidden sm:inline">
+                  💬 Коментари {commentCount > 0 && `(${commentCount})`}
+                  {!commentsTableExists && <span className="text-red-500 text-xs ml-1">⚠️</span>}
+                </span>
+                <span className="sm:hidden">
+                  💬 {commentCount > 0 && `(${commentCount})`}
+                  {!commentsTableExists && <span className="text-red-500 text-xs ml-1">⚠️</span>}
+                </span>
               </TabsTrigger>
             </TabsList>
 
@@ -642,11 +674,11 @@ export default function ProductDetailPage() {
             </TabsContent>
 
             <TabsContent value="prices" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <PriceStatistics product={product} />
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-lg">
                       🏪 Сравнение между магазини
                     </CardTitle>
                     <CardDescription>

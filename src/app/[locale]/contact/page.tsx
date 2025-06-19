@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react'
+import { Mail, Phone, MapPin, Send } from 'lucide-react'
 import { useState } from 'react'
 
 export default function ContactPage() {
@@ -172,36 +172,7 @@ export default function ContactPage() {
               </CardContent>
             </Card>
 
-            {/* Business Hours */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-purple-500" />
-                  Работно време
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Понеделник - Петък</span>
-                    <span className="font-medium">9:00 - 18:00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Събота</span>
-                    <span className="font-medium">10:00 - 16:00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Неделя</span>
-                    <span className="text-gray-500">Затворено</span>
-                  </div>
-                </div>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Забележка:</strong> Отговаряме на имейли в рамките на 24 часа в работни дни.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+
 
             {/* FAQ Link */}
             <Card>

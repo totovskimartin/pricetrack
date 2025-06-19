@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { logAdminAction } from '@/lib/admin'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useConfirmation } from '@/hooks/use-confirmation'
+import { MobileProductsManagement } from './mobile-products-management'
 import {
   Search,
   Plus,
@@ -77,6 +78,18 @@ export default function ProductsManagement() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchProducts()
@@ -286,6 +299,29 @@ export default function ProductsManagement() {
     })
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <>
+        <ConfirmationComponent />
+        <MobileProductsManagement
+          products={filteredProducts}
+          loading={loading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onView={(product) => window.open(`/bg/products/${product.slug}`, '_blank')}
+          formatDate={formatDate}
+          formatPrice={(price: number, currency: string) => `${price.toFixed(2)} ${currency}`}
+        />
+      </>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="space-y-6">
       <ConfirmationComponent />

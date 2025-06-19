@@ -1,9 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const baseUrl = `${url.protocol}//${url.host}`
+import { NextResponse } from 'next/server'
 
+export async function GET() {
   const manifest = {
     "name": "PriceTrack BG - Проследяване на цени",
     "short_name": "PriceTrack BG",
@@ -18,7 +16,7 @@ export async function GET(request: NextRequest) {
     "categories": ["shopping", "lifestyle", "productivity"],
     "icons": [
       {
-        "src": `${baseUrl}/next.svg`,
+        "src": "/next.svg",
         "sizes": "any",
         "type": "image/svg+xml"
       }
@@ -31,19 +29,7 @@ export async function GET(request: NextRequest) {
         "url": "/bg/products",
         "icons": [
           {
-            "src": `${baseUrl}/next.svg`,
-            "sizes": "any"
-          }
-        ]
-      },
-      {
-        "name": "Супермаркети",
-        "short_name": "Супермаркети",
-        "description": "Преглед на супермаркети",
-        "url": "/bg/supermarkets",
-        "icons": [
-          {
-            "src": `${baseUrl}/next.svg`,
+            "src": "/next.svg",
             "sizes": "any"
           }
         ]
@@ -55,7 +41,7 @@ export async function GET(request: NextRequest) {
         "url": "/bg/discussions",
         "icons": [
           {
-            "src": `${baseUrl}/next.svg`,
+            "src": "/next.svg",
             "sizes": "any"
           }
         ]

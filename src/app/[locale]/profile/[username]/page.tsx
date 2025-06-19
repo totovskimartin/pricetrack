@@ -138,6 +138,24 @@ export default function UserProfilePage() {
     }
   }
 
+  const getDisplayName = (profile: UserProfile) => {
+    // Try first_name + last_name combination
+    if (profile.first_name || profile.last_name) {
+      const firstName = profile.first_name?.trim() || ''
+      const lastName = profile.last_name?.trim() || ''
+      const fullName = `${firstName} ${lastName}`.trim()
+      if (fullName) return fullName
+    }
+
+    // Try full_name
+    if (profile.full_name?.trim()) {
+      return profile.full_name.trim()
+    }
+
+    // Fallback to @username
+    return `@${profile.username}`
+  }
+
   const isOwnProfile = currentUser && profile && currentUser.id === profile.id
 
   if (loading) {
@@ -185,19 +203,20 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
+              <span className="hidden sm:inline">Назад</span>
+              <span className="sm:hidden">Назад</span>
             </Button>
           </div>
           {isOwnProfile && (
             <Link href="/bg/settings">
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <Settings className="h-4 w-4 mr-2" />
                 Редактирай профил
               </Button>
@@ -207,15 +226,15 @@ export default function UserProfilePage() {
 
         {/* Profile Card */}
         <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-6">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
               {/* Avatar */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 self-center sm:self-start">
                 {profile.avatar_url ? (
                   <img
                     src={profile.avatar_url}
-                    alt={profile.username}
-                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                    alt={getDisplayName(profile)}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-200"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
@@ -223,38 +242,36 @@ export default function UserProfilePage() {
                     }}
                   />
                 ) : null}
-                <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center border-2 border-gray-200 ${profile.avatar_url ? 'hidden' : ''}`}>
-                  <User className="h-12 w-12 text-blue-600" />
+                <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-blue-100 rounded-full flex items-center justify-center border-2 border-gray-200 ${profile.avatar_url ? 'hidden' : ''}`}>
+                  <User className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600" />
                 </div>
               </div>
 
               {/* Profile Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                      @{profile.username}
-                    </h1>
-                    {profile.full_name && (
-                      <p className="text-lg text-gray-600 mb-2">{profile.full_name}</p>
-                    )}
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Член от {new Date(profile.created_at).toLocaleDateString('bg-BG')}
-                      </div>
-                      {isOwnProfile && (
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-1" />
-                          {profile.email}
-                        </div>
-                      )}
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <div className="mb-4">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                    {getDisplayName(profile)}
+                  </h1>
+                  {getDisplayName(profile) !== `@${profile.username}` && (
+                    <p className="text-base sm:text-lg text-gray-600 mb-2">@{profile.username}</p>
+                  )}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500">
+                    <div className="flex items-center justify-center sm:justify-start">
+                      <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>Член от {new Date(profile.created_at).toLocaleDateString('bg-BG')}</span>
                     </div>
+                    {isOwnProfile && (
+                      <div className="flex items-center justify-center sm:justify-start">
+                        <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">{profile.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Badges */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
                   <Badge variant={getRoleBadgeVariant(profile.role)}>
                     <Shield className="h-3 w-3 mr-1" />
                     {getRoleLabel(profile.role)}
@@ -275,26 +292,26 @@ export default function UserProfilePage() {
               <CardTitle>Статистики</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <MessageCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-600">{stats.discussions_count}</div>
-                  <div className="text-sm text-gray-600">Дискусии</div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg">
+                  <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mx-auto mb-2" />
+                  <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.discussions_count}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Дискусии</div>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <MessageCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-green-600">{stats.comments_count}</div>
-                  <div className="text-sm text-gray-600">Коментари</div>
+                <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg">
+                  <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
+                  <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.comments_count}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Коментари</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <ShoppingCart className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-purple-600">{stats.products_count}</div>
-                  <div className="text-sm text-gray-600">Продукти</div>
+                <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mx-auto mb-2" />
+                  <div className="text-lg sm:text-2xl font-bold text-purple-600">{stats.products_count}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Продукти</div>
                 </div>
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <Heart className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-red-600">{stats.favorites_count}</div>
-                  <div className="text-sm text-gray-600">Любими</div>
+                <div className="text-center p-3 sm:p-4 bg-red-50 rounded-lg">
+                  <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 mx-auto mb-2" />
+                  <div className="text-lg sm:text-2xl font-bold text-red-600">{stats.favorites_count}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Любими</div>
                 </div>
               </div>
             </CardContent>

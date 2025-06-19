@@ -34,6 +34,7 @@ import { bg } from 'date-fns/locale'
 import Link from 'next/link'
 import { useToast } from '@/components/providers/toast-provider'
 import { NotificationDetailModal } from './notification-detail-modal'
+import { MobileAlertsManagement } from './mobile-alerts-management'
 
 interface AdminNotification {
   id: string
@@ -59,7 +60,19 @@ export default function AlertsManagement() {
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([])
   const [selectedNotification, setSelectedNotification] = useState<AdminNotification | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const { showSuccess, showError } = useToast()
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchNotifications()
@@ -235,6 +248,38 @@ export default function AlertsManagement() {
     )
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <>
+        <MobileAlertsManagement
+          alerts={filteredNotifications}
+          loading={loading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
+          onView={handleViewNotification}
+          onDelete={(alert) => deleteNotifications([alert.id])}
+          onMarkAsRead={(alert) => markAsRead([alert.id])}
+          formatDate={(date) => format(new Date(date), 'dd.MM.yyyy', { locale: bg })}
+          formatRelativeTime={(date) => format(new Date(date), 'dd.MM.yyyy HH:mm', { locale: bg })}
+        />
+
+        {/* Notification Detail Modal */}
+        <NotificationDetailModal
+          notification={selectedNotification}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onMarkAsRead={handleMarkAsReadFromModal}
+        />
+      </>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="space-y-6">
       {/* Header */}

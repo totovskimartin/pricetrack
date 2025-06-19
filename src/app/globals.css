@@ -116,6 +116,40 @@ select,
   -webkit-line-clamp: 3;
 }
 
+/* Safe area support for mobile devices */
+@supports (padding: max(0px)) {
+  .top-safe {
+    top: max(12px, env(safe-area-inset-top));
+  }
+
+  .left-safe {
+    left: max(12px, env(safe-area-inset-left));
+  }
+
+  .right-safe {
+    right: max(12px, env(safe-area-inset-right));
+  }
+
+  .bottom-safe {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Mobile header and sidebar positioning */
+@media (max-width: 1023px) {
+  .mobile-sidebar {
+    top: calc(env(safe-area-inset-top) + 60px);
+    height: calc(100vh - env(safe-area-inset-top) - 60px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    top: 0;
+    height: 100vh;
+  }
+}
+
 /* Mobile table optimizations */
 @media (max-width: 768px) {
   table:not(.responsive-table-custom) {

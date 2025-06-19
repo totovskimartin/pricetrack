@@ -107,7 +107,7 @@ export function canModifyUserRole(
 }
 
 /**
- * Log admin action
+ * Log admin action (client-side version with API fallback)
  */
 export async function logAdminAction(
   adminId: string,
@@ -117,8 +117,64 @@ export async function logAdminAction(
   details: any = {}
 ) {
   try {
+    const { supabase } = await import('@/lib/supabase')
+
+    // Try direct client-side logging first
+    const { error } = await supabase
+      .from('admin_logs')
+      .insert({
+        admin_id: adminId,
+        action,
+        target_type: targetType,
+        target_id: targetId,
+        details
+      })
+
+    if (error) {
+      console.warn('Direct logging failed, trying API route:', error)
+
+      // Fallback to API route
+      const response = await fetch('/api/admin/log-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminId,
+          action,
+          targetType,
+          targetId,
+          details
+        })
+      })
+
+      if (!response.ok) {
+        console.error('API logging also failed:', await response.text())
+        return false
+      }
+    }
+
+    return true
+  } catch (error) {
+    console.error('Failed to log admin action:', error)
+    // Don't throw error for logging failures to avoid breaking the main operation
+    return false
+  }
+}
+
+/**
+ * Log admin action (server-side version)
+ */
+export async function logAdminActionServer(
+  adminId: string,
+  action: string,
+  targetType: string,
+  targetId: string,
+  details: any = {}
+) {
+  try {
     const supabaseAdmin = createServerSupabaseAdminClient()
-    
+
     const { error } = await supabaseAdmin
       .from('admin_logs')
       .insert({
@@ -153,11 +209,15 @@ export async function getAdminStats() {
       { count: totalUsers },
       { count: totalProducts },
       { count: totalSupermarkets },
+      { count: totalDiscussions },
+      { count: totalAlerts },
       { count: pendingProducts }
     ] = await Promise.all([
       supabase.from('users').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }),
       supabase.from('supermarkets').select('*', { count: 'exact', head: true }),
+      supabase.from('discussions').select('*', { count: 'exact', head: true }),
+      supabase.from('admin_notifications').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_approved', false)
     ])
 
@@ -165,7 +225,8 @@ export async function getAdminStats() {
       totalUsers: totalUsers || 0,
       totalProducts: totalProducts || 0,
       totalSupermarkets: totalSupermarkets || 0,
-      totalDiscussions: 0, // Will be implemented when discussions are added
+      totalDiscussions: totalDiscussions || 0,
+      totalAlerts: totalAlerts || 0,
       pendingApprovals: pendingProducts || 0,
       activeUsers: totalUsers || 0, // TODO: Calculate active users in last 30 days
       recentActivity: [] // Will be implemented when admin_logs table is added
@@ -177,6 +238,7 @@ export async function getAdminStats() {
       totalProducts: 0,
       totalSupermarkets: 0,
       totalDiscussions: 0,
+      totalAlerts: 0,
       pendingApprovals: 0,
       activeUsers: 0,
       recentActivity: []
@@ -351,7 +413,7 @@ export async function moderateContent(
 
     // Log the action (optional, skip if logging fails)
     try {
-      await logAdminAction(
+      await logAdminActionServer(
         adminId,
         `${action}_${contentType}`,
         contentType,

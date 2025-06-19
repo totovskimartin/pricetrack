@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
 import { PriceSuggestionsManagement } from '@/components/admin/price-suggestions-management'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface UserProfile {
@@ -96,6 +99,12 @@ export default function PriceSuggestionsPage() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="mb-4">
+            <Link href="/bg/admin">
+              <Button variant="outline" size="sm" className="mb-4">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Обратно към админ панела
+              </Button>
+            </Link>
             <h1 className="text-3xl font-bold text-gray-900">
               Предложения за цени
             </h1>

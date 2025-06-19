@@ -184,12 +184,16 @@ export default function SettingsManagement() {
     switch (setting.type) {
       case 'boolean':
         return (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <Switch
               checked={setting.value === 'true'}
               onCheckedChange={(checked) => handleChange(checked.toString())}
             />
-            <span className="text-sm text-gray-600">
+            <span className={`text-sm font-medium ${
+              setting.value === 'true'
+                ? 'text-blue-700'
+                : 'text-gray-500'
+            }`}>
               {setting.value === 'true' ? 'Включено' : 'Изключено'}
             </span>
           </div>
@@ -351,13 +355,10 @@ export default function SettingsManagement() {
                 {group.settings.map((setting) => (
                   <div key={setting.key} className="flex items-start justify-between py-4 border-b border-gray-100 last:border-b-0">
                     <div className="flex-1 mr-4">
-                      <div className="flex items-center space-x-2 mb-1">
+                      <div className="mb-1">
                         <h4 className="font-medium text-gray-900">
                           {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </h4>
-                        <Badge variant="outline" className="text-xs">
-                          {setting.type}
-                        </Badge>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
                         {setting.description}

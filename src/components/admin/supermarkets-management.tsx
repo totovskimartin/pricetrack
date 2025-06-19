@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { logAdminAction } from '@/lib/admin'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useConfirmation } from '@/hooks/use-confirmation'
+import { MobileSupermarketsManagement } from './mobile-supermarkets-management'
 import {
   Search,
   Plus,
@@ -48,7 +49,20 @@ export default function SupermarketsManagement() {
   const [supermarkets, setSupermarkets] = useState<Supermarket[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchSupermarkets()
@@ -162,10 +176,16 @@ export default function SupermarketsManagement() {
     )
   }
 
-  const filteredSupermarkets = supermarkets.filter(supermarket =>
-    supermarket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    supermarket.slug.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredSupermarkets = supermarkets.filter(supermarket => {
+    const matchesSearch = supermarket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supermarket.slug.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'active' && supermarket.is_active) ||
+      (statusFilter === 'inactive' && !supermarket.is_active)
+
+    return matchesSearch && matchesStatus
+  })
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('bg-BG', {
@@ -175,6 +195,28 @@ export default function SupermarketsManagement() {
     })
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <>
+        <ConfirmationComponent />
+        <MobileSupermarketsManagement
+          supermarkets={filteredSupermarkets}
+          loading={loading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          onAdd={() => window.open('/bg/admin/supermarkets/new', '_blank')}
+          onEdit={(supermarket) => window.open(`/bg/admin/supermarkets/${supermarket.id}/edit`, '_blank')}
+          onDelete={handleDelete}
+          formatDate={formatDate}
+        />
+      </>
+    )
+  }
+
+  // Desktop Layout
   return (
     <div className="space-y-6">
       <ConfirmationComponent />
