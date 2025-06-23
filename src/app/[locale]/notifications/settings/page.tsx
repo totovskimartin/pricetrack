@@ -343,7 +343,6 @@ export default function NotificationSettingsPage() {
           </CardContent>
         </Card>
 
-      </div>
     </div>
   )
 }

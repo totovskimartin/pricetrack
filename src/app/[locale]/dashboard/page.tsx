@@ -115,7 +115,7 @@ function DashboardContent() {
             ...product,
             latest_price: latestPrice ? {
               price: latestPrice.price_bgn,
-              supermarket_name: latestPrice.supermarkets?.name
+              supermarket_name: (latestPrice.supermarkets as any)?.name
             } : null
           }
         })
@@ -225,6 +225,7 @@ function DashboardContent() {
           id,
           price_bgn,
           created_at,
+          supermarket_id,
           products (
             id,
             name,
@@ -253,9 +254,9 @@ function DashboardContent() {
             id: `alert-${alert.id}`,
             type: 'price_alert',
             title: getAlertTitle(alert.alert_type),
-            description: `${alert.products?.name} - ${alert.old_price?.toFixed(2)} лв. → ${alert.new_price.toFixed(2)} лв.`,
+            description: `${(alert.products as any)?.name} - ${alert.old_price?.toFixed(2)} лв. → ${alert.new_price.toFixed(2)} лв.`,
             product: alert.products,
-            supermarket: alert.supermarkets?.name,
+            supermarket: (alert.supermarkets as any)?.name,
             oldPrice: alert.old_price,
             newPrice: alert.new_price,
             percentageChange: alert.percentage_change,
@@ -270,7 +271,7 @@ function DashboardContent() {
         for (const price of recentPricesData) {
           // Only add if not already covered by alerts
           const hasAlert = alertsData?.some(alert =>
-            alert.products?.id === price.products?.id &&
+            (alert.products as any)?.id === (price.products as any)?.id &&
             Math.abs(new Date(alert.created_at).getTime() - new Date(price.created_at).getTime()) < 60000
           )
 
@@ -279,7 +280,7 @@ function DashboardContent() {
             const { data: previousPricesData } = await supabase
               .from('prices')
               .select('id, price_bgn, created_at')
-              .eq('product_id', price.products?.id)
+              .eq('product_id', (price.products as any)?.id)
               .eq('supermarket_id', price.supermarket_id)
               .neq('id', price.id)
               .lt('created_at', price.created_at)
@@ -293,20 +294,20 @@ function DashboardContent() {
               const previousPrice = previousPricesData[0]
               oldPrice = previousPrice.price_bgn
               percentageChange = ((price.price_bgn - previousPrice.price_bgn) / previousPrice.price_bgn) * 100
-              console.log(`Price change for ${price.products?.name}: ${previousPrice.price_bgn} → ${price.price_bgn} (${percentageChange.toFixed(1)}%)`)
+              console.log(`Price change for ${(price.products as any)?.name}: ${previousPrice.price_bgn} → ${price.price_bgn} (${percentageChange.toFixed(1)}%)`)
             } else {
               // If no previous price, show as new price with neutral indicator
               percentageChange = 0
-              console.log(`New price entry for ${price.products?.name}: ${price.price_bgn} лв. (no previous price)`)
+              console.log(`New price entry for ${(price.products as any)?.name}: ${price.price_bgn} лв. (no previous price)`)
             }
 
             activities.push({
               id: `price-${price.id}`,
               type: 'price_update',
               title: 'Нова цена',
-              description: `${price.products?.name} - ${price.price_bgn.toFixed(2)} лв.`,
+              description: `${(price.products as any)?.name} - ${price.price_bgn.toFixed(2)} лв.`,
               product: price.products,
-              supermarket: price.supermarkets?.name,
+              supermarket: (price.supermarkets as any)?.name,
               newPrice: price.price_bgn,
               oldPrice: oldPrice,
               percentageChange: percentageChange,
