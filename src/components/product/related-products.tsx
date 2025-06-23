@@ -172,7 +172,7 @@ export function RelatedProducts({ currentProduct }: RelatedProductsProps) {
               <Card className="hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
                       {product.image_url ? (
                         <img
                           src={product.image_url}
@@ -180,33 +180,33 @@ export function RelatedProducts({ currentProduct }: RelatedProductsProps) {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <div className="text-gray-400 text-xl">📦</div>
+                        <div className="text-muted-foreground text-xl">📦</div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                      <h4 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
                         {product.name}
                       </h4>
                       {product.brand && (
-                        <p className="text-xs text-gray-500 mb-2">{product.brand}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{product.brand}</p>
                       )}
                       {product.latest_price ? (
                         <div>
                           <p className="text-sm font-bold text-green-600">
                             {product.latest_price.price.toFixed(2)} лв.
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             {product.latest_price.supermarket_name}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-500">Няма данни за цена</p>
+                        <p className="text-xs text-muted-foreground">Няма данни за цена</p>
                       )}
                     </div>
                   </div>
                   
                   {/* Quick Action Buttons */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                     <div className="flex items-center space-x-2">
                       <Button
                         size="sm"
@@ -217,7 +217,7 @@ export function RelatedProducts({ currentProduct }: RelatedProductsProps) {
                           // Add to favorites logic here
                         }}
                       >
-                        <Heart className="h-3 w-3 text-gray-400 hover:text-red-500" />
+                        <Heart className="h-3 w-3 text-muted-foreground hover:text-red-500" />
                       </Button>
                       <Button
                         size="sm"
@@ -228,10 +228,10 @@ export function RelatedProducts({ currentProduct }: RelatedProductsProps) {
                           // Add to tracking logic here
                         }}
                       >
-                        <Bell className="h-3 w-3 text-gray-400 hover:text-blue-500" />
+                        <Bell className="h-3 w-3 text-muted-foreground hover:text-blue-500" />
                       </Button>
                     </div>
-                    <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors">
+                    <div className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
                       Виж детайли →
                     </div>
                   </div>

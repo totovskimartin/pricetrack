@@ -320,7 +320,6 @@ export default function DiscussionsModeration() {
             .eq('id', commentId)
 
           if (error) {
-            console.error('Error rejecting comment:', error)
             return
           }
 
@@ -328,7 +327,7 @@ export default function DiscussionsModeration() {
           try {
             await logAdminAction(user.id, 'reject_comment', 'comment', commentId)
           } catch (logError) {
-            console.warn('Failed to log admin action:', logError)
+            // Failed to log admin action - continue silently
           }
 
           if (selectedDiscussion) {
@@ -338,7 +337,7 @@ export default function DiscussionsModeration() {
           // Show success toast
           showSuccess('Коментарът е отхвърлен успешно')
         } catch (error) {
-          console.error('Error:', error)
+          // Error handling - show user-friendly message
         } finally {
           setActionLoading(null)
         }

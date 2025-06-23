@@ -160,10 +160,10 @@ export function SidebarNavigation() {
         onMenuToggle={() => setIsOpen(!isOpen)}
       />
 
-      {/* Transparent Overlay for mobile - allows closing by clicking outside */}
+      {/* Backdrop Overlay for mobile - allows closing by clicking outside */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 lg:hidden"
+          className="fixed inset-0 z-30 lg:hidden bg-black/20 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -171,8 +171,8 @@ export function SidebarNavigation() {
       {/* Sidebar */}
       <div
         className={`
-          fixed left-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
-          mobile-sidebar lg:desktop-sidebar
+          fixed left-0 w-64 bg-white border-r border-border shadow-lg z-50 transform transition-transform duration-300 ease-in-out
+          mobile-sidebar lg:desktop-sidebar lg:bg-background lg:shadow-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:z-auto
         `}
@@ -183,31 +183,33 @@ export function SidebarNavigation() {
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <Link
-              href="/bg/dashboard"
-              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setIsOpen(false)}
-            >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">PriceTrack</h1>
-                <p className="text-xs text-gray-500">България</p>
-              </div>
-            </Link>
+          {/* Header - Hidden on mobile since we have mobile header */}
+          <div className="p-4 border-b border-border hidden lg:block">
+            <div className="flex items-center justify-between">
+              <Link
+                href="/bg/dashboard"
+                className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setIsOpen(false)}
+              >
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-foreground">PriceTrack</h1>
+                  <p className="text-xs text-muted-foreground">България</p>
+                </div>
+              </Link>
+            </div>
           </div>
 
           {/* User Info */}
           {user && (
-            <div className="border-b border-gray-100 bg-gray-50">
+            <div className="border-b border-border bg-muted">
               {userProfile?.username ? (
                 <Link
                   href={`/bg/profile/${userProfile.username}`}
                   onClick={() => setIsOpen(false)}
-                  className="block p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="block p-4 hover:bg-muted/80 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 relative">
@@ -223,12 +225,12 @@ export function SidebarNavigation() {
                           }}
                         />
                       ) : null}
-                      <div className={`w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ${userProfile.avatar_url ? 'hidden' : ''}`}>
-                        <User className="h-5 w-5 text-blue-600" />
+                      <div className={`w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center ${userProfile.avatar_url ? 'hidden' : ''}`}>
+                        <User className="h-5 w-5 text-primary" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 hover:text-blue-700 truncate">
+                      <p className="text-sm font-medium text-primary hover:text-primary/80 truncate">
                         {(() => {
                           // Try first_name + last_name combination
                           if (userProfile.first_name || userProfile.last_name) {
@@ -247,7 +249,7 @@ export function SidebarNavigation() {
                           return `@${userProfile.username}`
                         })()}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
                 </Link>
@@ -267,15 +269,15 @@ export function SidebarNavigation() {
                           }}
                         />
                       ) : null}
-                      <div className={`w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ${userProfile?.avatar_url ? 'hidden' : ''}`}>
-                        <User className="h-5 w-5 text-blue-600" />
+                      <div className={`w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center ${userProfile?.avatar_url ? 'hidden' : ''}`}>
+                        <User className="h-5 w-5 text-primary" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {user.user_metadata?.full_name || user.email?.split('@')[0] || 'Потребител'}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
                 </div>
@@ -300,9 +302,9 @@ export function SidebarNavigation() {
                     onClick={() => setIsOpen(false)}
                     className={`
                       flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer
-                      ${active 
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ${active
+                        ? 'bg-blue-50/80 text-blue-700 border border-blue-100/60'
+                        : 'text-foreground hover:bg-muted hover:text-foreground'
                       }
                     `}
                   >
@@ -316,8 +318,8 @@ export function SidebarNavigation() {
             {/* User Items */}
             {userItems.length > 0 && (
               <>
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <div className="pt-4 mt-4 border-t border-border">
+                  <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Лично
                   </p>
                   <div className="space-y-1">
@@ -334,8 +336,8 @@ export function SidebarNavigation() {
                           className={`
                             flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer
                             ${active
-                              ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                              ? 'bg-blue-50/80 text-blue-700 border border-blue-100/60'
+                              : 'text-foreground hover:bg-muted hover:text-foreground'
                             }
                           `}
                         >
@@ -360,8 +362,8 @@ export function SidebarNavigation() {
             {/* Admin Items */}
             {adminItems.length > 0 && (
               <>
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <div className="pt-4 mt-4 border-t border-border">
+                  <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Администрация
                   </p>
                   <div className="space-y-1">
@@ -378,7 +380,7 @@ export function SidebarNavigation() {
                             flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer
                             ${active
                               ? 'bg-red-100 text-red-700 border border-red-200'
-                              : 'text-gray-700 hover:bg-red-50 hover:text-red-900'
+                              : 'text-foreground hover:bg-red-50 hover:text-red-900'
                             }
                           `}
                         >
@@ -399,20 +401,25 @@ export function SidebarNavigation() {
                 </div>
               </>
             )}
+
+            {/* Exit Button - positioned right below the last navlink */}
+            {user && (
+              <div className={`pt-4 mt-4 ${(userItems.length > 0 || adminItems.length > 0) ? 'border-t border-border' : ''}`}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-3" />
+                  Изход
+                </Button>
+              </div>
+            )}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
-            {user ? (
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4 mr-3" />
-                Изход
-              </Button>
-            ) : (
+          {/* Footer - Login/Register buttons for non-authenticated users */}
+          {!user && (
+            <div className="p-4 border-t border-border">
               <div className="space-y-2">
                 <Link href="/bg/login" onClick={() => setIsOpen(false)}>
                   <Button className="w-full cursor-pointer hover:bg-blue-700">
@@ -425,8 +432,8 @@ export function SidebarNavigation() {
                   </Button>
                 </Link>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </>

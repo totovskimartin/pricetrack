@@ -71,10 +71,7 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching comments:', error)
-        if (error.code === '42P01') {
-          console.log('Comments table does not exist yet. Please run the migration.')
-        }
+        // Comments table may not exist yet or other error occurred
         return
       }
 
@@ -267,8 +264,8 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
   if (loading) {
     return (
       <div className="text-center py-6">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Зареждане на коментари...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Зареждане на коментари...</p>
       </div>
     )
   }
@@ -303,7 +300,7 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
       ) : (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-600 mb-4">Влезте в акаунта си за да оставите коментар</p>
+            <p className="text-muted-foreground mb-4">Влезте в акаунта си за да оставите коментар</p>
             <div className="space-x-2">
               <Button asChild>
                 <Link href="/bg/login">Вход</Link>
@@ -319,8 +316,8 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
       {/* Comments List */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
-          <MessageCircle className="h-5 w-5 text-gray-600" />
-          <h3 className="text-lg font-semibold">
+          <MessageCircle className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-foreground">
             Коментари ({comments.length})
           </h3>
         </div>
@@ -328,9 +325,9 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
         {comments.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 mb-2">Все още няма коментари за този продукт</p>
-              <p className="text-sm text-gray-400">Бъдете първият, който ще сподели мнение!</p>
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-muted-foreground mb-2">Все още няма коментари за този продукт</p>
+              <p className="text-sm text-muted-foreground/70">Бъдете първият, който ще сподели мнение!</p>
             </CardContent>
           </Card>
         ) : (
@@ -340,17 +337,17 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium text-sm">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm text-foreground">
                         {getUserDisplayName(comment)}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {format(new Date(comment.created_at), 'dd MMM yyyy, HH:mm', { locale: bg })}
                       </span>
                     </div>
                   </div>
-                  
-                  <p className="text-gray-700 leading-relaxed">
+
+                  <p className="text-foreground leading-relaxed">
                     {comment.content}
                   </p>
                   
@@ -361,24 +358,24 @@ export function SimpleCommentsSection({ productId, onCommentCountChange }: Simpl
                       onClick={() => handleVote(comment.id, 'like')}
                       disabled={!user}
                       className={`cursor-pointer ${
-                        userVotes[comment.id] === 'like' 
-                          ? 'text-green-600 bg-green-50' 
-                          : 'text-gray-600 hover:text-green-600'
+                        userVotes[comment.id] === 'like'
+                          ? 'text-green-600 bg-green-50'
+                          : 'text-muted-foreground hover:text-green-600'
                       }`}
                     >
                       <ThumbsUp className="h-4 w-4 mr-1" />
                       {comment.likes}
                     </Button>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleVote(comment.id, 'dislike')}
                       disabled={!user}
                       className={`cursor-pointer ${
-                        userVotes[comment.id] === 'dislike' 
-                          ? 'text-red-600 bg-red-50' 
-                          : 'text-gray-600 hover:text-red-600'
+                        userVotes[comment.id] === 'dislike'
+                          ? 'text-red-600 bg-red-50'
+                          : 'text-muted-foreground hover:text-red-600'
                       }`}
                     >
                       <ThumbsDown className="h-4 w-4 mr-1" />

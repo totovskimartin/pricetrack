@@ -70,14 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // Periodic check for user active status (every 5 minutes)
-    // Temporarily disabled for debugging
     const checkUserStatus = async () => {
       if (user && user.id !== 'e669c358-f587-4a65-b0e4-f6ff8f465921') { // Skip for test user
-        console.log('Periodic check for user:', user.id)
         const userActive = await isUserActiveById(user.id)
-        console.log('Periodic check result:', userActive)
         if (!userActive) {
-          console.log('Periodic check: User is inactive, signing out...')
           await supabase.auth.signOut()
           setUser(null)
           if (typeof window !== 'undefined') {
@@ -87,21 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Temporarily disable periodic checks for debugging
-    // const statusCheckInterval = setInterval(checkUserStatus, 5 * 60 * 1000) // 5 minutes
-    const statusCheckInterval = null
+    const statusCheckInterval = setInterval(checkUserStatus, 5 * 60 * 1000) // 5 minutes
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (isMounted) {
           if (session?.user) {
-            console.log('Auth state change - user detected:', session.user.id)
-
             // For sign-in events, we already checked user status in the signIn functions
             // Skip additional check here to avoid redundant database calls
             if (event === 'SIGNED_IN') {
-              console.log('User signed in successfully, skipping redundant active status check')
+              // User signed in successfully, skipping redundant active status check
             }
 
             console.log('Setting user in auth provider')

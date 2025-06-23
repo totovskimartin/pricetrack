@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Collapsible } from '@/components/ui/collapsible'
 import { Heart, Search, Filter, ShoppingCart, Trash2, Eye, TrendingUp, AlertCircle } from 'lucide-react'
 import { useFavorites } from '@/hooks/use-favorites'
 import { usePriceTracking } from '@/hooks/use-price-tracking'
@@ -159,32 +160,29 @@ function FavoritesContent() {
           </Card>
         ) : (
           <>
-            {/* Filters and Search */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Filter className="h-5 w-5 mr-2 text-blue-500" />
-                  Филтри и търсене
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Търсете по име или марка..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="mb-6">
+              <Collapsible
+                title="Филтри и сортиране"
+                defaultOpen={false}
+                icon={<Filter className="h-5 w-5" />}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Търсене
-                    </label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Търсете по име или марка..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Категория
                     </label>
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -202,7 +200,7 @@ function FavoritesContent() {
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Сортиране
                     </label>
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -217,8 +215,8 @@ function FavoritesContent() {
                     </Select>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </Collapsible>
+            </div>
 
             {/* Results Summary */}
             {filteredProducts.length !== favoriteProducts.length && (

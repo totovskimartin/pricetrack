@@ -128,8 +128,8 @@ export function PriceComparison({ product }: PriceComparisonProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground">
+            <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>Все още няма записани цени за този продукт</p>
           </div>
         </CardContent>
@@ -156,8 +156,8 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                   lowestPriceComparison.latestPrice.currency
                 )}
               </div>
-              <div className="text-sm text-gray-600">Най-ниска цена</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-sm text-muted-foreground">Най-ниска цена</div>
+              <div className="text-xs text-muted-foreground mt-1">
                 {lowestPriceComparison?.supermarket.name}
               </div>
             </div>
@@ -169,8 +169,8 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                   comparisons[comparisons.length - 1].latestPrice.currency
                 )}
               </div>
-              <div className="text-sm text-gray-600">Най-висока цена</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-sm text-muted-foreground">Най-висока цена</div>
+              <div className="text-xs text-muted-foreground mt-1">
                 {comparisons[comparisons.length - 1]?.supermarket.name}
               </div>
             </div>
@@ -185,8 +185,8 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                   lowestPriceComparison.latestPrice.currency
                 )}
               </div>
-              <div className="text-sm text-gray-600">Разлика</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-sm text-muted-foreground">Разлика</div>
+              <div className="text-xs text-muted-foreground mt-1">
                 {lowestPriceComparison && comparisons.length > 1 &&
                   `${getPriceDifference(
                     comparisons[comparisons.length - 1].latestPrice.price,
@@ -239,12 +239,12 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                         )}
                       </h4>
                       {comparison.supermarket.location && (
-                        <div className="flex items-center text-gray-500 text-sm mt-1">
+                        <div className="flex items-center text-muted-foreground text-sm mt-1">
                           <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
                           <span className="truncate">{comparison.supermarket.location}</span>
                         </div>
                       )}
-                      <div className="flex items-center text-gray-500 text-sm mt-1">
+                      <div className="flex items-center text-muted-foreground text-sm mt-1">
                         <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
                         <span>Обновено: {new Date(comparison.lastUpdated).toLocaleDateString('bg-BG')}</span>
                       </div>
@@ -253,7 +253,7 @@ export function PriceComparison({ product }: PriceComparisonProps) {
 
                   {/* Price Info */}
                   <div className="text-center sm:text-right flex-shrink-0">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    <div className="text-2xl sm:text-3xl font-bold text-foreground">
                       {formatPrice(comparison.latestPrice.price, comparison.latestPrice.currency)}
                     </div>
 
@@ -273,29 +273,29 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                 </div>
 
                 {/* Additional Stats */}
-                <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
                   <div className="text-center sm:text-left">
-                    <div className="text-gray-600">Най-ниска историческа</div>
-                    <div className="font-semibold">
+                    <div className="text-muted-foreground">Най-ниска историческа</div>
+                    <div className="font-semibold text-foreground">
                       {formatPrice(comparison.lowestPrice.price, comparison.lowestPrice.currency)}
                     </div>
                   </div>
                   <div className="text-center sm:text-left">
-                    <div className="text-gray-600">Средна цена</div>
-                    <div className="font-semibold">
+                    <div className="text-muted-foreground">Средна цена</div>
+                    <div className="font-semibold text-foreground">
                       {formatPrice(comparison.averagePrice, comparison.latestPrice.currency)}
                     </div>
                   </div>
                   <div className="text-center sm:text-left">
-                    <div className="text-gray-600">Брой записи</div>
-                    <div className="font-semibold">{comparison.priceCount}</div>
+                    <div className="text-muted-foreground">Брой записи</div>
+                    <div className="font-semibold text-foreground">{comparison.priceCount}</div>
                   </div>
                 </div>
 
                 {/* Price Trend */}
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <span className="text-sm text-gray-600">Тенденция на цената:</span>
+                    <span className="text-sm text-muted-foreground">Тенденция на цената:</span>
                     <div className="flex items-center">
                       {comparison.latestPrice.price > comparison.averagePrice ? (
                         <div className="flex items-center text-red-600 text-sm">
@@ -308,7 +308,7 @@ export function PriceComparison({ product }: PriceComparisonProps) {
                           Под средната
                         </div>
                       ) : (
-                        <div className="flex items-center text-gray-600 text-sm">
+                        <div className="flex items-center text-muted-foreground text-sm">
                           Средна цена
                         </div>
                       )}

@@ -69,9 +69,9 @@ export function MobileDiscussionsModeration({
       'product-review': 'bg-blue-100 text-blue-800',
       'shopping-tip': 'bg-green-100 text-green-800',
       'question': 'bg-purple-100 text-purple-800',
-      'general': 'bg-gray-100 text-gray-800'
+      'general': 'bg-muted text-muted-foreground'
     }
-    return colors[category] || 'bg-gray-100 text-gray-800'
+    return colors[category] || 'bg-muted text-muted-foreground'
   }
 
   return (
@@ -79,11 +79,11 @@ export function MobileDiscussionsModeration({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+          <h2 className="text-lg font-semibold text-foreground flex items-center">
             <MessageSquare className="h-5 w-5 mr-2 text-orange-600" />
             Дискусии ({discussions.length})
           </h2>
-          <p className="text-sm text-gray-600">Модерация на съдържание</p>
+          <p className="text-sm text-muted-foreground">Модерация на съдържание</p>
         </div>
         <Button
           variant="outline"
@@ -98,7 +98,7 @@ export function MobileDiscussionsModeration({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder="Търси дискусии..."
           value={searchTerm}
@@ -114,11 +114,11 @@ export function MobileDiscussionsModeration({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Статус</label>
+                  <label className="text-sm font-medium text-foreground">Статус</label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full mt-1 p-2 border border-gray-300 rounded-md bg-white text-sm"
+                    className="w-full mt-1 p-2 border border-input rounded-md bg-background text-foreground text-sm"
                   >
                     <option value="all">Всички</option>
                     <option value="pending">Чакащи</option>
@@ -128,11 +128,11 @@ export function MobileDiscussionsModeration({
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium">Категория</label>
+                  <label className="text-sm font-medium text-foreground">Категория</label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full mt-1 p-2 border border-gray-300 rounded-md bg-white text-sm"
+                    className="w-full mt-1 p-2 border border-input rounded-md bg-background text-foreground text-sm"
                   >
                     <option value="all">Всички</option>
                     <option value="price-alert">Ценови сигнал</option>
@@ -152,13 +152,13 @@ export function MobileDiscussionsModeration({
       {loading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="text-gray-500 mt-2">Зареждане...</p>
+          <p className="text-muted-foreground mt-2">Зареждане...</p>
         </div>
       ) : discussions.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Няма намерени дискусии</p>
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Няма намерени дискусии</p>
           </CardContent>
         </Card>
       ) : (
@@ -177,11 +177,11 @@ export function MobileDiscussionsModeration({
                         {getStatusBadge(discussion.status)}
                       </div>
                       
-                      <h3 className="font-medium text-gray-900 text-sm leading-tight">
+                      <h3 className="font-medium text-foreground text-sm leading-tight">
                         {discussion.title}
                       </h3>
-                      
-                      <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
+
+                      <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
                         <User className="h-3 w-3" />
                         <span>{discussion.created_by_user?.full_name || discussion.created_by_user?.email || 'Анонимен'}</span>
                         <Calendar className="h-3 w-3 ml-2" />
@@ -192,13 +192,13 @@ export function MobileDiscussionsModeration({
 
                   {/* Content Preview */}
                   {discussion.content && (
-                    <p className="text-sm text-gray-600 line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {discussion.content}
                     </p>
                   )}
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3 text-xs text-gray-500">
+                  <div className="grid grid-cols-3 gap-3 text-xs text-muted-foreground">
                     <div className="flex items-center">
                       <MessageCircle className="h-3 w-3 mr-1" />
                       <span>{discussion.comment_count || 0} коментара</span>

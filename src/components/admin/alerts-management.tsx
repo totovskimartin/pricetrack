@@ -33,6 +33,7 @@ import { format } from 'date-fns'
 import { bg } from 'date-fns/locale'
 import Link from 'next/link'
 import { useToast } from '@/components/providers/toast-provider'
+import { useAuth } from '@/components/providers/auth-provider'
 import { NotificationDetailModal } from './notification-detail-modal'
 import { MobileAlertsManagement } from './mobile-alerts-management'
 
@@ -62,6 +63,7 @@ export default function AlertsManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { showSuccess, showError } = useToast()
+  const { user } = useAuth()
 
   // Check if mobile
   useEffect(() => {
@@ -151,12 +153,17 @@ export default function AlertsManagement() {
   }
 
   const markAsRead = async (notificationIds: string[]) => {
+    if (!user) {
+      showError('Грешка', 'Не сте влезли в системата')
+      return
+    }
+
     try {
       // Mark each notification as read using the RPC function
       const promises = notificationIds.map(id =>
         supabase.rpc('mark_admin_notification_read', {
           p_notification_id: id,
-          p_user_id: 'system' // or get actual user ID if available
+          p_user_id: user.id
         })
       )
 
@@ -164,13 +171,14 @@ export default function AlertsManagement() {
       const errors = results.filter(result => result.error)
 
       if (errors.length > 0) {
+        console.error('Errors marking notifications as read:', errors)
         throw new Error(`Failed to mark ${errors.length} notifications as read`)
       }
 
       setNotifications(prev =>
         prev.map(notification =>
           notificationIds.includes(notification.id)
-            ? { ...notification, is_read: true, read_at: new Date().toISOString() }
+            ? { ...notification, is_read: true, read_at: new Date().toISOString(), read_by: user.id }
             : notification
         )
       )
@@ -198,9 +206,9 @@ export default function AlertsManagement() {
   const handleMarkAsReadFromModal = async (notificationId: string) => {
     await markAsRead([notificationId])
     // Update the selected notification state if it's the same one
-    if (selectedNotification?.id === notificationId) {
+    if (selectedNotification?.id === notificationId && user) {
       setSelectedNotification(prev =>
-        prev ? { ...prev, is_read: true, read_at: new Date().toISOString() } : null
+        prev ? { ...prev, is_read: true, read_at: new Date().toISOString(), read_by: user.id } : null
       )
     }
   }

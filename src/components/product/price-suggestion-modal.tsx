@@ -122,16 +122,6 @@ export function PriceSuggestionModal({
       const currentPrice = getCurrentPrice(form.supermarket_id)
       const suggestedPrice = parseFloat(form.suggested_price_bgn)
 
-      // Debug logging
-      console.log('Submitting price suggestion:', {
-        user_id: user.id,
-        product_id: productId,
-        supermarket_id: form.supermarket_id,
-        suggested_price_bgn: suggestedPrice,
-        current_price_bgn: currentPrice,
-        notes: form.notes
-      })
-
       const { data, error } = await supabase
         .from('price_suggestions')
         .insert({
@@ -145,11 +135,8 @@ export function PriceSuggestionModal({
         .select()
 
       if (error) {
-        console.error('Supabase error:', error)
         throw error
       }
-
-      console.log('Price suggestion submitted successfully:', data)
       setSuccess(true)
       onSuccess?.()
 
@@ -159,8 +146,6 @@ export function PriceSuggestionModal({
       }, 2000)
 
     } catch (error: any) {
-      console.error('Error submitting price suggestion:', error)
-
       // More specific error messages
       let errorMessage = 'Възникна грешка при изпращане на предложението за цена.'
 
@@ -197,8 +182,8 @@ export function PriceSuggestionModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md bg-white text-gray-900">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -267,13 +252,13 @@ export function PriceSuggestionModal({
                   <SelectTrigger>
                     <SelectValue placeholder="Изберете магазин" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
                     {supermarkets.map((supermarket) => (
-                      <SelectItem key={supermarket.id} value={supermarket.id}>
+                      <SelectItem key={supermarket.id} value={supermarket.id} className="text-gray-900 hover:bg-gray-100">
                         <div className="flex items-center space-x-2">
                           {supermarket.logo_url && (
-                            <img 
-                              src={supermarket.logo_url} 
+                            <img
+                              src={supermarket.logo_url}
                               alt={supermarket.name}
                               className="w-4 h-4 object-contain"
                             />

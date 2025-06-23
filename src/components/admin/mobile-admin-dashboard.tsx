@@ -105,7 +105,7 @@ export function MobileAdminDashboard({
 
       {/* Pending Approvals */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <AlertCircle className="h-5 w-5 mr-2 text-orange-600" />
           Чакащи одобрения
         </h2>

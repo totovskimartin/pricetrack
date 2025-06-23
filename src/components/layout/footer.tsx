@@ -6,8 +6,6 @@ import {
   Twitter,
   Instagram,
   Mail,
-  Phone,
-  MapPin,
   ShoppingCart,
   FileText,
   HelpCircle
@@ -111,22 +109,7 @@ export function Footer() {
                   info@pricetrack.bg
                 </a>
               </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <a 
-                  href="tel:+359888123456" 
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  +359 888 123 456
-                </a>
-              </div>
-              <div className="flex items-start space-x-3">
-                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <div className="text-gray-300 text-sm">
-                  <p>София, България</p>
-                  <p>бул. Витоша 1</p>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -139,7 +122,7 @@ export function Footer() {
                 © {currentYear} PriceTrack България. Всички права запазени.
               </div>
               <div className="text-gray-500 text-xs">
-                v0.2-beta
+                v0.3-beta
               </div>
             </div>
             <div className="flex items-center space-x-6 text-sm">

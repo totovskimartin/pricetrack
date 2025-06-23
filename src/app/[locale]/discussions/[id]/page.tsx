@@ -94,29 +94,27 @@ function CommentThread({
   const isLiked = userCommentLikes.has(comment.id)
 
   return (
-    <div className={`${depth > 0 ? 'ml-6 mt-3 border-l-2 border-gray-100 pl-4' : 'border-l-4 border-blue-100 pl-4'} bg-gray-50 rounded-r-lg p-4`}>
+    <div className={`${depth > 0 ? 'ml-3 sm:ml-6 mt-3 border-l-2 border-gray-100 pl-3 sm:pl-4' : 'border-l-4 border-blue-100 pl-3 sm:pl-4'} bg-gray-50 rounded-r-lg p-3 sm:p-4`}>
       {/* Comment Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 text-sm">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-blue-600" />
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-gray-900 text-sm truncate">
+              {comment.created_by_user?.full_name ||
+               comment.created_by_user?.email ||
+               'Анонимен'}
             </div>
-            <div>
-              <span className="font-medium text-gray-900">
-                {comment.created_by_user?.full_name ||
-                 comment.created_by_user?.email ||
-                 'Анонимен'}
-              </span>
-              <div className="text-xs text-gray-500">
-                {formatDate(comment.created_at)}
-              </div>
+            <div className="text-xs text-gray-500">
+              {formatDate(comment.created_at)}
             </div>
           </div>
         </div>
 
         {/* Comment Actions */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 flex-shrink-0">
           {user && (
             <>
               <Button
@@ -128,7 +126,7 @@ function CommentThread({
                 }`}
               >
                 <Heart className={`h-3 w-3 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{comment.like_count || 0}</span>
+                <span className="hidden sm:inline">{comment.like_count || 0}</span>
               </Button>
 
               {depth < maxDepth && (
@@ -139,7 +137,7 @@ function CommentThread({
                   className="flex items-center space-x-1 text-xs px-2 py-1 h-auto text-gray-500 hover:bg-gray-100"
                 >
                   <Reply className="h-3 w-3" />
-                  <span>Отговори</span>
+                  <span className="hidden sm:inline">Отговори</span>
                 </Button>
               )}
             </>
@@ -170,7 +168,7 @@ function CommentThread({
                 maxLength={1000}
                 className="text-sm resize-none"
               />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <p className="text-xs text-gray-500">
                   {commentsNeedApproval
                     ? 'Отговорите се модерират преди публикуване'
@@ -183,7 +181,7 @@ function CommentThread({
                     variant="ghost"
                     size="sm"
                     onClick={() => onReply('')}
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-none"
                   >
                     Отказ
                   </Button>
@@ -191,10 +189,11 @@ function CommentThread({
                     type="submit"
                     disabled={submittingComment || !replyContent.trim()}
                     size="sm"
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-none"
                   >
                     <Send className="h-3 w-3 mr-1" />
-                    {submittingComment ? 'Изпращане...' : 'Публикувай отговор'}
+                    <span className="hidden sm:inline">{submittingComment ? 'Изпращане...' : 'Публикувай отговор'}</span>
+                    <span className="sm:hidden">{submittingComment ? 'Изпращане...' : 'Публикувай'}</span>
                   </Button>
                 </div>
               </div>
@@ -649,76 +648,79 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <ConfirmationComponent />
-        {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
-          <Link href="/bg/discussions">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Обратно
-            </Button>
-          </Link>
-        </div>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
+      <ConfirmationComponent />
 
-        {/* Discussion */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center space-x-2 mb-2">
-              <Badge className={getCategoryColor(discussion.category)}>
-                {discussion.category}
-              </Badge>
-              <span className="text-sm text-gray-500">
-                {formatDate(discussion.created_at)}
-              </span>
-            </div>
-            <CardTitle className="text-2xl">{discussion.title}</CardTitle>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <User className="h-4 w-4" />
-                  <span>
-                    {discussion.created_by_user?.full_name ||
-                     discussion.created_by_user?.email ||
-                     'Анонимен'}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{discussion.comment_count || 0} коментара</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{discussion.views || 0} прегледа</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Heart className="h-4 w-4" />
-                  <span>{discussion.like_count || 0} харесвания</span>
-                </div>
+      {/* Header */}
+      <div className="flex items-center space-x-4 mb-6">
+        <Link href="/bg/discussions">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Обратно
+          </Button>
+        </Link>
+      </div>
+
+      {/* Discussion */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+            <Badge className={getCategoryColor(discussion.category)}>
+              {discussion.category}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {formatDate(discussion.created_at)}
+            </span>
+          </div>
+
+          <CardTitle className="text-xl sm:text-2xl mb-4">{discussion.title}</CardTitle>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-1">
+                <User className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">
+                  {discussion.created_by_user?.full_name ||
+                   discussion.created_by_user?.email ||
+                   'Анонимен'}
+                </span>
               </div>
-
-              {/* Like Button */}
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLikeDiscussion}
-                  className={`flex items-center space-x-1 ${
-                    userLikes.has(discussion.id)
-                      ? 'text-red-600 hover:text-red-700'
-                      : 'text-gray-600 hover:text-gray-700'
-                  }`}
-                >
-                  <Heart className={`h-4 w-4 ${userLikes.has(discussion.id) ? 'fill-current' : ''}`} />
-                  <span>Харесай</span>
-                </Button>
-              )}
+              <div className="flex items-center space-x-1">
+                <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                <span>{discussion.comment_count || 0}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Eye className="h-4 w-4 flex-shrink-0" />
+                <span>{discussion.views || 0}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Heart className="h-4 w-4 flex-shrink-0" />
+                <span>{discussion.like_count || 0}</span>
+              </div>
             </div>
-          </CardHeader>
+
+            {/* Like Button */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLikeDiscussion}
+                className={`flex items-center space-x-2 w-full sm:w-auto ${
+                  userLikes.has(discussion.id)
+                    ? 'text-red-600 hover:text-red-700'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${userLikes.has(discussion.id) ? 'fill-current' : ''}`} />
+                <span>Харесай</span>
+              </Button>
+            )}
+          </div>
+        </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
-              <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+              <p className="whitespace-pre-wrap text-foreground leading-relaxed">
                 {discussion.content}
               </p>
             </div>
@@ -763,7 +765,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
               )}
             </div>
 
-            {/* Add Comment Form - Moved to Bottom */}
+            {/* Add Comment Form */}
             {user ? (
               <div className="border-t pt-6">
                 <form onSubmit={handleSubmitComment}>
@@ -779,7 +781,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
                       maxLength={2000}
                       className="resize-none"
                     />
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <p className="text-xs text-gray-500">
                         {commentsNeedApproval
                           ? 'Коментарите се модерират преди публикуване'
@@ -790,9 +792,11 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
                         type="submit"
                         disabled={submittingComment || !newComment.trim()}
                         size="sm"
+                        className="w-full sm:w-auto"
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        {submittingComment ? 'Изпращане...' : 'Публикувай коментар'}
+                        <span className="hidden sm:inline">{submittingComment ? 'Изпращане...' : 'Публикувай коментар'}</span>
+                        <span className="sm:hidden">{submittingComment ? 'Изпращане...' : 'Публикувай'}</span>
                       </Button>
                     </div>
                   </div>
@@ -813,7 +817,6 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

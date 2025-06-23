@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Collapsible } from '@/components/ui/collapsible'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/providers/auth-provider'
 import {
@@ -143,8 +144,8 @@ export default function DiscussionsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Зареждане на дискусии...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Зареждане на дискусии...</p>
           </div>
         </div>
       </div>
@@ -155,9 +156,9 @@ export default function DiscussionsPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
-          <p className="text-gray-600 mb-4">За да видите дискусиите, моля влезте в профила си.</p>
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">Влезте в профила си</h1>
+          <p className="text-muted-foreground mb-4">За да видите дискусиите, моля влезте в профила си.</p>
           <Link href="/bg/login">
             <Button>Вход</Button>
           </Link>
@@ -171,11 +172,11 @@ export default function DiscussionsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center space-x-3">
-            <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center space-x-3">
+            <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <span>Дискусии</span>
           </h1>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Обсъждайте цени, продукти и споделяйте съвети за пазаруване
           </p>
         </div>
@@ -191,25 +192,29 @@ export default function DiscussionsPage() {
         )}
       </div>
 
-      {/* Filters and Search */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Търсене</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Търси в дискусии..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Търси в дискусии..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
 
+      {/* Filters */}
+      <div className="mb-6">
+        <Collapsible
+          title="Филтри и сортиране"
+          defaultOpen={false}
+          icon={<Filter className="h-5 w-5" />}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Категория</label>
+              <label className="text-sm font-medium text-foreground">Категория</label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Всички категории" />
@@ -226,7 +231,7 @@ export default function DiscussionsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Сортиране</label>
+              <label className="text-sm font-medium text-foreground">Сортиране</label>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue />
@@ -246,20 +251,20 @@ export default function DiscussionsPage() {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </Collapsible>
+      </div>
 
       {/* Discussions List */}
       <div className="space-y-4">
         {filteredDiscussions.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 Няма намерени дискусии
               </h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm || categoryFilter !== 'all' 
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || categoryFilter !== 'all'
                   ? 'Опитайте с различни критерии за търсене'
                   : 'Бъдете първият, който започва дискусия!'
                 }
@@ -276,55 +281,55 @@ export default function DiscussionsPage() {
           </Card>
         ) : (
           filteredDiscussions.map((discussion) => (
-            <Card key={discussion.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <Badge className={getCategoryColor(discussion.category)}>
-                        {discussion.category}
-                      </Badge>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(discussion.created_at)}
-                      </span>
-                    </div>
-                    
-                    <Link href={`/bg/discussions/${discussion.id}`}>
-                      <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors mb-2">
-                        {discussion.title}
-                      </h3>
-                    </Link>
-                    
-                    <p className="text-gray-600 mb-3 line-clamp-2">
-                      {discussion.content.substring(0, 200)}
-                      {discussion.content.length > 200 && '...'}
-                    </p>
-                    
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <User className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate max-w-[120px] sm:max-w-none">
-                          {discussion.created_by_user?.full_name ||
-                           discussion.created_by_user?.email ||
-                           'Анонимен'}
+            <Card key={discussion.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Link href={`/bg/discussions/${discussion.id}`} className="block">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <Badge className={getCategoryColor(discussion.category)}>
+                          {discussion.category}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(discussion.created_at)}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <MessageCircle className="h-4 w-4 flex-shrink-0" />
-                        <span>{discussion.comment_count || 0} коментара</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Eye className="h-4 w-4 flex-shrink-0" />
-                        <span>{discussion.views || 0} прегледа</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Heart className="h-4 w-4 flex-shrink-0" />
-                        <span>{discussion.like_count || 0} харесвания</span>
+
+                      <h3 className="text-lg font-semibold text-foreground hover:text-primary transition-colors mb-2">
+                        {discussion.title}
+                      </h3>
+
+                      <p className="text-muted-foreground mb-3 line-clamp-2">
+                        {discussion.content.substring(0, 200)}
+                        {discussion.content.length > 200 && '...'}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <User className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate max-w-[120px] sm:max-w-none">
+                            {discussion.created_by_user?.full_name ||
+                             discussion.created_by_user?.email ||
+                             'Анонимен'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MessageCircle className="h-4 w-4 flex-shrink-0" />
+                          <span>{discussion.comment_count || 0} коментара</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Eye className="h-4 w-4 flex-shrink-0" />
+                          <span>{discussion.views || 0} прегледа</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Heart className="h-4 w-4 flex-shrink-0" />
+                          <span>{discussion.like_count || 0} харесвания</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              </Link>
             </Card>
           ))
         )}

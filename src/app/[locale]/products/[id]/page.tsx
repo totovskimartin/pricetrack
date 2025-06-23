@@ -60,7 +60,7 @@ export default function ProductDetailPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { toggleFavorite: toggleFavoriteHook, isFavorite, refetchFavorites } = useFavorites()
-  const { toggleTracking, isTracking, refetch: refetchTracking } = usePriceTracking()
+  const { toggleTracking, isTracking, removeFromTracking, refetch: refetchTracking } = usePriceTracking()
 
   // Category translations
   const categoryTranslations: Record<string, string> = {
@@ -302,8 +302,46 @@ export default function ProductDetailPage() {
       return
     }
 
-    // Show modal to set/update target price
-    setShowTargetPriceModal(true)
+    const isCurrentlyTracking = userProduct?.is_tracking || isTracking(product.id)
+
+    if (isCurrentlyTracking) {
+      // Direct stop - no modal needed
+      await handleDirectStop()
+    } else {
+      // Show modal to set target price for new tracking
+      setShowTargetPriceModal(true)
+    }
+  }
+
+  const handleDirectStop = async () => {
+    if (!user || !product) return
+
+    setActionLoading(true)
+
+    try {
+      const success = await removeFromTracking(product.id)
+
+      if (success) {
+        // Refresh tracking state
+        await refetchTracking()
+
+        // Update local state
+        setUserProduct(prev => ({
+          id: prev?.id || `local_${product.id}`,
+          is_tracking: false,
+          is_favorite: prev?.is_favorite || false
+        }))
+
+        // Show success message
+        setSuccessMessage('Следенето на цената е спряно!')
+      } else {
+        setSuccessMessage('Възникна грешка при спирането на следенето')
+      }
+    } catch (error) {
+      setSuccessMessage('Възникна грешка при спирането на следенето')
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   const handleTargetPriceConfirm = async (targetPrice?: number) => {
@@ -312,6 +350,9 @@ export default function ProductDetailPage() {
     setActionLoading(true)
 
     try {
+      // Determine the current state before toggling
+      const wasTrackingBefore = userProduct?.is_tracking || isTracking(product.id)
+
       const wasToggled = await toggleTracking(product.id, targetPrice)
 
       if (wasToggled) {
@@ -325,10 +366,12 @@ export default function ProductDetailPage() {
           is_favorite: prev?.is_favorite || false
         }))
 
-        // Show success message
-        if (isTracking(product.id)) {
+        // Show success message based on what the action was
+        if (!wasTrackingBefore) {
+          // Was not tracking before, so we started tracking
           setSuccessMessage('Следенето на цената е активирано!')
         } else {
+          // Was tracking before, so we stopped tracking
           setSuccessMessage('Следенето на цената е спряно!')
         }
       }
@@ -422,12 +465,12 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Зареждане на продукта...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Зареждане на продукта...</p>
             </div>
           </div>
         </div>
@@ -439,9 +482,9 @@ export default function ProductDetailPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Влезте в профила си</h1>
-          <p className="text-gray-600 mb-4">За да видите продуктите, моля влезте в профила си.</p>
+          <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">Влезте в профила си</h1>
+          <p className="text-muted-foreground mb-4">За да видите продуктите, моля влезте в профила си.</p>
           <Link href="/bg/login">
             <Button>Вход</Button>
           </Link>
@@ -452,14 +495,14 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">❌</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+            <div className="text-muted-foreground text-6xl mb-4">❌</div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               Продуктът не е намерен
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Продуктът, който търсите, не съществува или е премахнат.
             </p>
             <Link href="/bg/products">
@@ -474,7 +517,7 @@ export default function ProductDetailPage() {
   const latestPrice = getLatestPrice()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Success Message Toast */}
       {successMessage && (
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top-2 duration-300">
@@ -493,11 +536,11 @@ export default function ProductDetailPage() {
       )}
 
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex items-center space-x-4">
-              <Link href="/bg/products" className="flex items-center text-blue-600 hover:text-blue-700 cursor-pointer">
+              <Link href="/bg/products" className="flex items-center text-primary hover:text-primary/80 cursor-pointer">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 <span className="hidden sm:inline">Назад към продуктите</span>
                 <span className="sm:hidden">Назад</span>
@@ -520,7 +563,11 @@ export default function ProductDetailPage() {
                     size="sm"
                     onClick={toggleFavorite}
                     disabled={actionLoading}
-                    className="cursor-pointer"
+                    className={`cursor-pointer ${
+                      (userProduct?.is_favorite || isFavorite(product.id))
+                        ? 'bg-red-500 hover:bg-red-600 text-white border-red-500'
+                        : 'hover:bg-red-50 hover:text-red-600 hover:border-red-300'
+                    }`}
                   >
                     <Heart className={`h-4 w-4 sm:mr-2 ${(userProduct?.is_favorite || isFavorite(product.id)) ? 'fill-current' : ''}`} />
                     <span className="hidden sm:inline">
@@ -532,7 +579,11 @@ export default function ProductDetailPage() {
                     size="sm"
                     onClick={handleTrackingClick}
                     disabled={actionLoading}
-                    className="cursor-pointer"
+                    className={`cursor-pointer ${
+                      (userProduct?.is_tracking || isTracking(product.id))
+                        ? 'bg-green-500 hover:bg-green-600 text-white border-green-500'
+                        : 'hover:bg-green-50 hover:text-green-600 hover:border-green-300'
+                    }`}
                   >
                     {(userProduct?.is_tracking || isTracking(product.id)) ? (
                       <BellOff className="h-4 w-4 sm:mr-2" />
@@ -564,7 +615,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
           {/* Product Image - Smaller */}
           <div className="md:col-span-1 lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            <div className="bg-card rounded-lg shadow-sm border overflow-hidden">
               {product.image_url ? (
                 <img
                   src={product.image_url}
@@ -572,8 +623,8 @@ export default function ProductDetailPage() {
                   className="w-full h-48 sm:h-56 object-contain p-4"
                 />
               ) : (
-                <div className="w-full h-48 sm:h-56 flex items-center justify-center bg-gray-50">
-                  <div className="text-gray-400 text-4xl">📦</div>
+                <div className="w-full h-48 sm:h-56 flex items-center justify-center bg-muted">
+                  <div className="text-muted-foreground text-4xl">📦</div>
                 </div>
               )}
             </div>
@@ -589,11 +640,11 @@ export default function ProductDetailPage() {
                   <Badge variant="secondary" className="text-xs">{product.brand}</Badge>
                 )}
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl font-bold text-foreground leading-tight">
                 {product.name}
               </h1>
               {product.description && (
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {product.description}
                 </p>
               )}
@@ -601,23 +652,23 @@ export default function ProductDetailPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-lg font-bold text-gray-900">
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <div className="text-lg font-bold text-foreground">
                   {product.price_entries.length}
                 </div>
-                <div className="text-xs text-gray-600">Записани цени</div>
+                <div className="text-xs text-muted-foreground">Записани цени</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-lg font-bold text-gray-900">
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <div className="text-lg font-bold text-foreground">
                   {Array.from(new Set(product.price_entries.map(p => p.supermarket.id))).length}
                 </div>
-                <div className="text-xs text-gray-600">Магазина</div>
+                <div className="text-xs text-muted-foreground">Магазина</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-lg font-bold text-gray-900">
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <div className="text-lg font-bold text-foreground">
                   {latestPrice ? new Date(latestPrice.recorded_at).toLocaleDateString('bg-BG') : 'N/A'}
                 </div>
-                <div className="text-xs text-gray-600">Последно обновяване</div>
+                <div className="text-xs text-muted-foreground">Последно обновяване</div>
               </div>
             </div>
           </div>
@@ -636,7 +687,7 @@ export default function ProductDetailPage() {
                     <div className="text-2xl font-bold text-green-600 mb-1">
                       {formatPriceWithEUR(latestPrice.price).bgn}
                     </div>
-                    <div className="text-sm text-gray-500 mb-3">
+                    <div className="text-sm text-muted-foreground mb-3">
                       {formatPriceWithEUR(latestPrice.price).eur}
                     </div>
                     <div className="flex items-center justify-center space-x-2 mb-2">
@@ -649,7 +700,7 @@ export default function ProductDetailPage() {
                       )}
                       <span className="font-medium text-sm">{latestPrice.supermarket.name}</span>
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {new Date(latestPrice.recorded_at).toLocaleDateString('bg-BG')}
                     </div>
                   </div>
@@ -662,7 +713,7 @@ export default function ProductDetailPage() {
         {/* Organized Tabbed Content */}
         <div className="mb-8">
           <Tabs defaultValue="charts" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsList className="grid w-full grid-cols-3 h-auto bg-gray-100">
               <TabsTrigger value="charts" className="text-xs sm:text-sm py-2">
                 <span className="hidden sm:inline">📈 Графики</span>
                 <span className="sm:hidden">📈</span>

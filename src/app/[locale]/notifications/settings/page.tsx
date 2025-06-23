@@ -71,33 +71,37 @@ export default function NotificationSettingsPage() {
   }
 
   return (
-    <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8">
       <ConfirmationComponent />
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex-1">
+          <div className="flex items-center space-x-4 mb-2">
             <Link href="/bg/notifications">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Обратно към известия
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-2">
-                <Settings className="h-8 w-8 text-blue-600" />
-                <span>Настройки за известия</span>
-              </h1>
-              <p className="text-gray-600 mt-1">Управлявайте как и кога да получавате известия</p>
-            </div>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center space-x-3">
+            <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+            <span>Настройки за известия</span>
+          </h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+            Управлявайте как и кога да получавате известия
+          </p>
+        </div>
+        <div className="flex-shrink-0">
+          <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
             <Save className="h-4 w-4 mr-2" />
             {saving ? 'Запазва...' : 'Запази настройки'}
           </Button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* In-App Notifications */}
           <Card>
             <CardHeader>
@@ -339,13 +343,6 @@ export default function NotificationSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Save Button */}
-        <div className="mt-6 text-center">
-          <Button onClick={handleSave} disabled={saving} size="lg">
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Запазва настройки...' : 'Запази настройки'}
-          </Button>
-        </div>
       </div>
     </div>
   )

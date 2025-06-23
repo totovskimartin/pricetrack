@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getProductUrl } from '@/lib/slug-utils'
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Search, Filter, TrendingUp, TrendingDown, Minus, MessageCircle, Heart, Eye, Plus, Grid, List, ShoppingCart, HelpCircle } from 'lucide-react'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { Collapsible } from '@/components/ui/collapsible'
 import { useProductListStats } from '@/hooks/use-product-stats'
 import { useAuth } from '@/components/providers/auth-provider'
 import { TourGuide, useTour } from '@/components/ui/tour-guide'
@@ -55,6 +56,7 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('name')
   const [viewMode, setViewMode] = useState<'grid' | 'sheet'>('sheet')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const { user } = useAuth()
 
@@ -254,6 +256,14 @@ export default function ProductsPage() {
     }
   }
 
+  // Initialize search term from URL parameters
+  useEffect(() => {
+    const searchQuery = searchParams.get('search')
+    if (searchQuery) {
+      setSearchTerm(searchQuery)
+    }
+  }, [searchParams])
+
   // Initialize data
   useEffect(() => {
     const initializeData = async () => {
@@ -391,12 +401,12 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Зареждане на продуктите...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Зареждане на продуктите...</p>
             </div>
           </div>
         </div>
@@ -420,7 +430,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-background">
       {/* Tour Guide */}
       <TourGuide
         steps={tourSteps}
@@ -433,12 +443,12 @@ export default function ProductsPage() {
       />
 
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Продукти</h1>
-              <p className="text-gray-600">Търсете и сравнявайте цени на продукти</p>
+              <h1 className="text-2xl font-bold text-foreground">Продукти</h1>
+              <p className="text-muted-foreground">Търсете и сравнявайте цени на продукти</p>
             </div>
             {canShowTour() && (
               <Button
@@ -456,81 +466,104 @@ export default function ProductsPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Търсете продукти по име, марка или описание..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Търсете продукти по име, марка или описание..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex flex-col sm:flex-row gap-2 flex-1">
-                <MultiSelect
-                  options={categories.filter(cat => cat !== 'all').map(category => ({
-                    label: translateCategory(category),
-                    value: category
-                  }))}
-                  selected={selectedCategories}
-                  onChange={setSelectedCategories}
-                  placeholder="Категории"
-                  className="w-full sm:w-48 multi-select-trigger"
-                />
+        {/* Filters */}
+        <div className="mb-8">
+          <Collapsible
+            title="Филтри и сортиране"
+            defaultOpen={false}
+            icon={<Filter className="h-5 w-5" />}
+            className="mb-4"
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Категории
+                  </label>
+                  <MultiSelect
+                    options={categories.filter(cat => cat !== 'all').map(category => ({
+                      label: translateCategory(category),
+                      value: category
+                    }))}
+                    selected={selectedCategories}
+                    onChange={setSelectedCategories}
+                    placeholder="Избери категории"
+                    className="w-full multi-select-trigger"
+                  />
+                </div>
 
-                <MultiSelect
-                  options={supermarkets.map(supermarket => ({
-                    label: supermarket.name,
-                    value: supermarket.id
-                  }))}
-                  selected={selectedSupermarkets}
-                  onChange={setSelectedSupermarkets}
-                  placeholder="Супермаркети"
-                  className="w-full sm:w-48"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Супермаркети
+                  </label>
+                  <MultiSelect
+                    options={supermarkets.map(supermarket => ({
+                      label: supermarket.name,
+                      value: supermarket.id
+                    }))}
+                    selected={selectedSupermarkets}
+                    onChange={setSelectedSupermarkets}
+                    placeholder="Избери супермаркети"
+                    className="w-full"
+                  />
+                </div>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Сортиране" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">По име</SelectItem>
-                    <SelectItem value="newest">Най-нови</SelectItem>
-                    <SelectItem value="discussions">Най-обсъждани</SelectItem>
-                    <SelectItem value="tracked">Най-следени</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Сортиране
+                  </label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Сортиране" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">По име</SelectItem>
+                      <SelectItem value="newest">Най-нови</SelectItem>
+                      <SelectItem value="discussions">Най-обсъждани</SelectItem>
+                      <SelectItem value="tracked">Най-следени</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center border rounded-lg p-1 bg-white w-full sm:w-auto">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="h-8 px-3 flex-1 sm:flex-none"
-                >
-                  <Grid className="h-4 w-4 mr-1" />
-                  Карти
-                </Button>
-                <Button
-                  variant={viewMode === 'sheet' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('sheet')}
-                  className="h-8 px-3 flex-1 sm:flex-none"
-                >
-                  <List className="h-4 w-4 mr-1" />
-                  Таблица
-                </Button>
+              <div className="flex justify-start">
+                <div className="flex items-center border border-border rounded-lg p-1 bg-muted">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="h-8 px-3"
+                  >
+                    <Grid className="h-4 w-4 mr-1" />
+                    Карти
+                  </Button>
+                  <Button
+                    variant={viewMode === 'sheet' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('sheet')}
+                    className="h-8 px-3"
+                  >
+                    <List className="h-4 w-4 mr-1" />
+                    Таблица
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          </Collapsible>
         </div>
 
         {/* Product Count and Add Button */}
@@ -560,7 +593,7 @@ export default function ProductsPage() {
                 <Card key={product.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                   <Link href={getProductUrl(product, 'bg')}>
                     <CardHeader className="pb-1 p-2">
-                      <div className="aspect-square bg-gray-100 rounded-md mb-1 flex items-center justify-center">
+                      <div className="aspect-square bg-muted rounded-md mb-1 flex items-center justify-center">
                         {product.image_url ? (
                           <img
                             src={product.image_url}
@@ -568,7 +601,7 @@ export default function ProductsPage() {
                             className="w-full h-full object-cover rounded-md"
                           />
                         ) : (
-                          <div className="text-gray-400 text-lg">📦</div>
+                          <div className="text-muted-foreground text-lg">📦</div>
                         )}
                       </div>
                       <CardTitle className="text-xs line-clamp-2 leading-tight">{product.name}</CardTitle>
@@ -584,16 +617,16 @@ export default function ProductsPage() {
                             <div className="text-sm font-bold text-green-600">
                               {formatPriceWithEUR(lowestPrice.price).bgn}
                             </div>
-                            <div className="text-xs text-gray-500 mb-0.5">
+                            <div className="text-xs text-muted-foreground mb-0.5">
                               {formatPriceWithEUR(lowestPrice.price).eur}
                             </div>
-                            <div className="text-xs text-gray-500 flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground flex items-center justify-between">
                               <span className="truncate">{lowestPrice.supermarket.name}</span>
                               <span className="text-xs text-green-600 font-medium">Най-ниска</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-gray-500 text-xs">Няма данни за цена</div>
+                          <div className="text-muted-foreground text-xs">Няма данни за цена</div>
                         )}
 
                         {/* Category */}
@@ -602,7 +635,7 @@ export default function ProductsPage() {
                         </Badge>
 
                         {/* Stats */}
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <div className="flex items-center space-x-1.5">
                             <div className="flex items-center">
                               <MessageCircle className="h-2.5 w-2.5 mr-0.5" />
@@ -627,29 +660,29 @@ export default function ProductsPage() {
           </div>
         ) : (
           /* Sheet View */
-          <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full table-auto responsive-table-custom">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-muted border-b">
                   <tr>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900">Продукт</th>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900 hidden sm:table-cell">Марка</th>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900 hidden md:table-cell">Категория</th>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-gray-900">Цена</th>
-                    <th className="text-center py-3 px-2 sm:px-4 font-medium text-gray-900 hidden lg:table-cell">Статистики</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground">Продукт</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground hidden sm:table-cell">Марка</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground hidden md:table-cell">Категория</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground">Цена</th>
+                    <th className="text-center py-3 px-2 sm:px-4 font-medium text-foreground hidden lg:table-cell">Статистики</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {products.map((product) => {
                     const lowestPrice = getLowestPrice(product)
                     const priceChange = getPriceChange(product)
                     const stats = getProductStats(product.id)
 
                     return (
-                      <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={product.id} className="hover:bg-muted/50 transition-colors">
                         <td className="py-3 px-2 sm:px-4">
-                          <Link href={getProductUrl(product, 'bg')} className="flex items-center space-x-2 sm:space-x-3 hover:text-blue-600">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0">
+                          <Link href={getProductUrl(product, 'bg')} className="flex items-center space-x-2 sm:space-x-3 hover:text-primary">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
                               {product.image_url ? (
                                 <img
                                   src={product.image_url}
@@ -657,16 +690,16 @@ export default function ProductsPage() {
                                   className="w-full h-full object-cover rounded-md"
                                 />
                               ) : (
-                                <div className="text-gray-400 text-sm sm:text-lg">📦</div>
+                                <div className="text-muted-foreground text-sm sm:text-lg">📦</div>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-medium text-gray-900 truncate text-sm sm:text-base">{product.name}</div>
-                              <div className="text-xs sm:text-sm text-gray-500">
+                              <div className="font-medium text-foreground truncate text-sm sm:text-base">{product.name}</div>
+                              <div className="text-xs sm:text-sm text-muted-foreground">
                                 <span className="sm:hidden">{product.brand || 'Без марка'}</span>
                                 <span className="hidden sm:inline">ID: {product.id.split('-')[0]}</span>
                               </div>
-                              <div className="text-xs text-gray-500 md:hidden">
+                              <div className="text-xs text-muted-foreground md:hidden">
                                 <Badge variant="outline" className="text-xs mt-1">
                                   {translateCategory(product.category)}
                                 </Badge>
@@ -675,7 +708,7 @@ export default function ProductsPage() {
                           </Link>
                         </td>
                         <td className="py-3 px-2 sm:px-4 hidden sm:table-cell">
-                          <span className="text-gray-900 text-sm">{product.brand || '-'}</span>
+                          <span className="text-foreground text-sm">{product.brand || '-'}</span>
                         </td>
                         <td className="py-3 px-2 sm:px-4 hidden md:table-cell">
                           <Badge variant="outline" className="text-xs">
@@ -688,7 +721,7 @@ export default function ProductsPage() {
                               <div className="font-bold text-green-600 text-sm sm:text-base">
                                 {formatPriceWithEUR(lowestPrice.price).bgn}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 {formatPriceWithEUR(lowestPrice.price).eur}
                               </div>
                               <div className="text-xs text-green-600 font-medium mt-1">
@@ -696,11 +729,11 @@ export default function ProductsPage() {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-gray-500 text-sm">Няма данни</span>
+                            <span className="text-muted-foreground text-sm">Няма данни</span>
                           )}
                         </td>
                         <td className="py-3 px-2 sm:px-4 hidden lg:table-cell">
-                          <div className="flex items-center justify-center space-x-2 sm:space-x-4 text-sm text-gray-500">
+                          <div className="flex items-center justify-center space-x-2 sm:space-x-4 text-sm text-muted-foreground">
                             <div className="flex items-center">
                               <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                               {stats.comments_count}
@@ -727,11 +760,11 @@ export default function ProductsPage() {
         {/* Empty State */}
         {products.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+            <div className="text-muted-foreground text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               Няма намерени продукти
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Опитайте да промените филтрите или търсенето
             </p>
             <Button onClick={() => {

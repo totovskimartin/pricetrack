@@ -180,12 +180,12 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload as ChartDataPoint
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium">{data.formattedDate}</p>
+        <div className="bg-card p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-medium text-foreground">{data.formattedDate}</p>
           <p className="text-blue-600 font-semibold">
             {formatPrice(data.price)}
           </p>
-          <p className="text-sm text-gray-600">{data.supermarket}</p>
+          <p className="text-sm text-muted-foreground">{data.supermarket}</p>
         </div>
       )
     }
@@ -200,7 +200,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
           y={0}
           dy={4}
           textAnchor="end"
-          fill="#64748b"
+          fill="#9ca3af"
           fontSize="11"
           style={{ whiteSpace: 'nowrap' }}
         >
@@ -218,7 +218,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
           y={20}
           dy={4}
           textAnchor="middle"
-          fill="#64748b"
+          fill="#9ca3af"
           fontSize="11"
         >
           {payload.value}
@@ -250,12 +250,12 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
       </CardHeader>
       <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         {/* Controls */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6 bg-white p-3 rounded-lg">
           <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
               <SelectItem value="7d">7 дни</SelectItem>
               <SelectItem value="30d">30 дни</SelectItem>
               <SelectItem value="90d">90 дни</SelectItem>
@@ -269,7 +269,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
               <SelectItem value="all">Всички магазини</SelectItem>
               {supermarkets.map((supermarket) => (
                 <SelectItem key={supermarket.id} value={supermarket.id}>
@@ -283,7 +283,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
             <SelectTrigger className="w-20">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
               <SelectItem value="BGN">лв.</SelectItem>
               <SelectItem value="EUR">€</SelectItem>
             </SelectContent>
@@ -294,17 +294,17 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
 
         {/* Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-600">Средна</div>
-            <div className="text-lg font-bold">{formatPrice(statistics.avg)}</div>
-          </div>
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <div className="text-sm text-green-600">Най-ниска</div>
-            <div className="text-lg font-bold text-green-700">{formatPrice(statistics.min)}</div>
+            <div className="text-lg font-bold text-green-600">{formatPrice(statistics.min)}</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-muted-foreground">Средна</div>
+            <div className="text-lg font-bold text-foreground">{formatPrice(statistics.avg)}</div>
           </div>
           <div className="text-center p-3 bg-red-50 rounded-lg">
             <div className="text-sm text-red-600">Най-висока</div>
-            <div className="text-lg font-bold text-red-700">{formatPrice(statistics.max)}</div>
+            <div className="text-lg font-bold text-red-600">{formatPrice(statistics.max)}</div>
           </div>
         </div>
 
@@ -325,7 +325,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
                 </defs>
                 <CartesianGrid
                   strokeDasharray="2 4"
-                  stroke="#e1e5e9"
+                  stroke="hsl(var(--border))"
                   strokeOpacity={0.6}
                   horizontal={true}
                   vertical={false}
@@ -368,7 +368,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-80 flex items-center justify-center text-gray-500">
+          <div className="h-80 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Няма данни за избрания период</p>
@@ -378,7 +378,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
 
         {/* Legend */}
         {chartData.length > 0 && (
-          <div className="mt-4 flex items-center justify-center space-x-4 text-sm text-gray-600">
+          <div className="mt-4 flex items-center justify-center space-x-4 text-sm text-muted-foreground">
             <div className="flex items-center space-x-1">
               <div className="w-3 h-0.5 bg-blue-500"></div>
               <span>Цена</span>

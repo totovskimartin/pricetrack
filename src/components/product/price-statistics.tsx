@@ -39,7 +39,7 @@ export function PriceStatistics({ product }: PriceStatisticsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500 text-center py-4">
+          <p className="text-muted-foreground text-center py-4">
             Няма достатъчно данни за статистики
           </p>
         </CardContent>
@@ -128,28 +128,28 @@ export function PriceStatistics({ product }: PriceStatisticsProps) {
       <CardContent className="space-y-4">
         {/* Price Change */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-3 bg-muted rounded-lg">
             <div className="flex items-center justify-center mb-1">
               {getTrendIcon(priceChange)}
-              <span className="ml-1 text-sm font-medium">Промяна</span>
+              <span className="ml-1 text-sm font-medium text-foreground">Промяна</span>
             </div>
             <div className={`text-lg font-bold ${getTrendColor(priceChange)}`}>
               {formatPercent(priceChangePercent)}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {priceChange !== 0 && `${priceChange > 0 ? '+' : ''}${formatPrice(Math.abs(priceChange))}`}
             </div>
           </div>
 
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-3 bg-muted rounded-lg">
             <div className="flex items-center justify-center mb-1">
               <Calendar className="h-4 w-4 text-blue-500" />
-              <span className="ml-1 text-sm font-medium">Тренд (7д)</span>
+              <span className="ml-1 text-sm font-medium text-foreground">Тренд (7д)</span>
             </div>
             <div className={`text-lg font-bold ${getTrendColor(trendChange)}`}>
               {formatPercent(trendPercent)}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {recentPrices.length} записа
             </div>
           </div>
@@ -158,15 +158,15 @@ export function PriceStatistics({ product }: PriceStatisticsProps) {
         {/* Min/Max/Average */}
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <div className="text-sm text-gray-500 mb-1">Минимална</div>
+            <div className="text-sm text-muted-foreground mb-1">Минимална</div>
             <div className="font-bold text-green-600">{formatPrice(minPrice)}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500 mb-1">Средна</div>
+            <div className="text-sm text-muted-foreground mb-1">Средна</div>
             <div className="font-bold text-blue-600">{formatPrice(avgPrice)}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500 mb-1">Максимална</div>
+            <div className="text-sm text-muted-foreground mb-1">Максимална</div>
             <div className="font-bold text-red-600">{formatPrice(maxPrice)}</div>
           </div>
         </div>
@@ -180,17 +180,17 @@ export function PriceStatistics({ product }: PriceStatisticsProps) {
             </h4>
             <div className="space-y-2">
               {storeAverages.slice(0, 3).map((store, index) => (
-                <div key={store.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div key={store.name} className="flex items-center justify-between p-2 bg-muted rounded">
                   <div className="flex items-center space-x-2">
                     {index === 0 && <Badge variant="default" className="text-xs">Най-евтин</Badge>}
                     {index === storeAverages.length - 1 && index > 0 && (
                       <Badge variant="destructive" className="text-xs">Най-скъп</Badge>
                     )}
-                    <span className="text-sm font-medium">{store.name}</span>
+                    <span className="text-sm font-medium text-foreground">{store.name}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold">{formatPrice(store.avgPrice)}</div>
-                    <div className="text-xs text-gray-500">{store.count} записа</div>
+                    <div className="text-sm font-bold text-foreground">{formatPrice(store.avgPrice)}</div>
+                    <div className="text-xs text-muted-foreground">{store.count} записа</div>
                   </div>
                 </div>
               ))}
@@ -199,8 +199,8 @@ export function PriceStatistics({ product }: PriceStatisticsProps) {
         )}
 
         {/* Data Summary */}
-        <div className="pt-2 border-t border-gray-200">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="pt-2 border-t border-border">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Общо {prices.length} записа за цени</span>
             <span>
               Последно обновяване: {new Date(sortedPrices[0]?.recorded_at).toLocaleDateString('bg-BG')}

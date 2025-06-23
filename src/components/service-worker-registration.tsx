@@ -15,8 +15,6 @@ export function ServiceWorkerRegistration() {
         scope: '/',
       })
 
-      console.log('Service Worker registered successfully:', registration)
-
       // Handle updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing
@@ -24,9 +22,6 @@ export function ServiceWorkerRegistration() {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New content is available, notify user
-              console.log('New content available! Please refresh.')
-              
-              // You could show a toast notification here
               if (window.confirm('New version available! Refresh to update?')) {
                 window.location.reload()
               }

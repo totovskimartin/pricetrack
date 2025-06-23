@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Check, X, Clock, Search, DollarSign, User, Calendar, MessageSquare, Edit, Trash2 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Check, X, Clock, Search, DollarSign, User, Calendar, MessageSquare, Edit, Trash2, Info, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/providers/auth-provider'
 import { format } from 'date-fns'
@@ -125,6 +126,21 @@ export function PriceSuggestionsManagement() {
     }
   }
 
+  const checkExistingTodayPrice = async (productId: string, supermarketId: string) => {
+    const today = new Date().toISOString().split('T')[0] // Get YYYY-MM-DD format
+
+    const { data, error } = await supabase
+      .from('prices')
+      .select('id, price_bgn, created_at')
+      .eq('product_id', productId)
+      .eq('supermarket_id', supermarketId)
+      .gte('created_at', `${today}T00:00:00.000Z`)
+      .lt('created_at', `${today}T23:59:59.999Z`)
+      .single()
+
+    return { existingPrice: data, error }
+  }
+
   const handleSuggestionAction = async (
     suggestionId: string,
     action: 'approve' | 'reject',
@@ -133,10 +149,31 @@ export function PriceSuggestionsManagement() {
     if (!userProfile) return
 
     setProcessingIds(prev => new Set(prev).add(suggestionId))
-    
+
     try {
       const suggestion = suggestions.find(s => s.id === suggestionId)
       if (!suggestion) return
+
+      // If creating price, check for existing price today
+      if (action === 'approve' && createPrice) {
+        const { existingPrice } = await checkExistingTodayPrice(
+          suggestion.product_id,
+          suggestion.supermarket_id
+        )
+
+        if (existingPrice) {
+          const confirmMessage = `Вече съществува цена за днес за този продукт в ${suggestion.supermarket.name}: ${existingPrice.price_bgn.toFixed(2)} лв.\n\nНовата цена (${suggestion.suggested_price_bgn.toFixed(2)} лв.) ще замени съществуващата. Продължавате ли?`
+
+          if (!confirm(confirmMessage)) {
+            setProcessingIds(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(suggestionId)
+              return newSet
+            })
+            return
+          }
+        }
+      }
 
       // Update suggestion status
       const { error: updateError } = await supabase
@@ -164,7 +201,8 @@ export function PriceSuggestionsManagement() {
 
         if (priceError) {
           console.error('Error creating price:', priceError)
-          // Don't throw here, suggestion was still updated
+          alert(`Грешка при добавяне на цената: ${priceError.message}`)
+          return
         }
       }
 
@@ -244,6 +282,33 @@ export function PriceSuggestionsManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Important Information Alert */}
+          <Alert className="mb-6 border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-800">Важна информация за цените</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              <div className="space-y-2">
+                <p>
+                  <strong>Ограничение за дневни цени:</strong> Системата позволява само <strong>една цена на ден</strong> за всеки продукт в даден супермаркет.
+                </p>
+                <p>
+                  Ако вече съществува цена за днес за същия продукт в същия магазин, новата цена ще замени старата.
+                  Това гарантира качество на данните и предотвратява дублиране.
+                </p>
+                <div className="flex items-center space-x-4 mt-3 text-sm">
+                  <div className="flex items-center space-x-1">
+                    <Check className="h-3 w-3 text-green-600" />
+                    <span><strong>Одобри и добави</strong> - Одобрява предложението и добавя цената</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Edit className="h-3 w-3 text-blue-600" />
+                    <span><strong>Само одобри</strong> - Одобрява без да добавя цена</span>
+                  </div>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+
           {/* Search */}
           <div className="flex items-center space-x-2 mb-6">
             <div className="relative flex-1">

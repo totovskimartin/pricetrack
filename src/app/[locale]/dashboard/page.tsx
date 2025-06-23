@@ -1,18 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getProductUrl } from '@/lib/slug-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { User, LogOut, TrendingUp, ShoppingCart, Heart, Eye, Bell, Newspaper } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { SearchResultsSkeleton, ProductCardSkeleton, ActivityFeedSkeleton, NewsCardSkeleton } from '@/components/ui/skeleton'
+import { User, LogOut, TrendingUp, ShoppingCart, Heart, Eye, Bell, Newspaper, Search, Activity, TrendingDown, Clock, ArrowUpRight, ArrowDownRight, MessageCircle } from 'lucide-react'
 import { useFavorites } from '@/hooks/use-favorites'
 import { usePriceTracking } from '@/hooks/use-price-tracking'
 import { useAuth } from '@/components/providers/auth-provider'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import Link from 'next/link'
+
 
 function DashboardContent() {
   const { user } = useAuth()
@@ -21,6 +24,16 @@ function DashboardContent() {
   const { trackedProducts, loading: trackingLoading } = usePriceTracking()
   const [news, setNews] = useState<any[]>([])
   const [newsLoading, setNewsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Activity Feed State
+  const [activityFeed, setActivityFeed] = useState<any[]>([])
+  const [activityLoading, setActivityLoading] = useState(true)
 
   // Fetch news from database
   const fetchNews = async () => {
@@ -48,9 +61,296 @@ function DashboardContent() {
     }
   }
 
+  // Search products function
+  const searchProducts = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    setSearchLoading(true)
+    try {
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          description,
+          category,
+          brand,
+          image_url,
+          created_at
+        `)
+        .eq('is_approved', true)
+        .or(`name.ilike.%${query}%,description.ilike.%${query}%,brand.ilike.%${query}%`)
+        .order('name')
+        .limit(8)
+
+      if (error) {
+        console.error('Search error:', error)
+        setSearchResults([])
+        return
+      }
+
+      // Get latest prices for search results
+      if (productsData && productsData.length > 0) {
+        const productIds = productsData.map(p => p.id)
+        const { data: pricesData } = await supabase
+          .from('prices')
+          .select(`
+            product_id,
+            price_bgn,
+            created_at,
+            supermarkets (
+              name
+            )
+          `)
+          .in('product_id', productIds)
+          .order('created_at', { ascending: false })
+
+        // Attach latest price to each product
+        const productsWithPrices = productsData.map(product => {
+          const latestPrice = pricesData?.find(price => price.product_id === product.id)
+          return {
+            ...product,
+            latest_price: latestPrice ? {
+              price: latestPrice.price_bgn,
+              supermarket_name: latestPrice.supermarkets?.name
+            } : null
+          }
+        })
+
+        setSearchResults(productsWithPrices)
+      } else {
+        setSearchResults([])
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchProducts(searchTerm)
+        setShowSearchResults(true)
+      } else {
+        setSearchResults([])
+        setShowSearchResults(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
+
+  // Click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Auto-focus search input on component mount
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [])
+
+  // Handle search form submission (Enter key)
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchTerm.trim()) {
+      router.push(`/bg/products?search=${encodeURIComponent(searchTerm.trim())}`)
+    }
+  }
+
   useEffect(() => {
     fetchNews()
-  }, [])
+    if (user) {
+      fetchActivityFeed()
+    }
+  }, [user])
+
+  // Fetch activity feed with recent price changes
+  const fetchActivityFeed = async () => {
+    try {
+      setActivityLoading(true)
+
+      // Get recent price alerts for the user
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('price_alerts')
+        .select(`
+          id,
+          alert_type,
+          old_price,
+          new_price,
+          percentage_change,
+          created_at,
+          products (
+            id,
+            name,
+            brand,
+            image_url
+          ),
+          supermarkets (
+            name
+          )
+        `)
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (alertsError) {
+        console.error('Error fetching price alerts:', alertsError)
+        setActivityFeed([])
+        return
+      }
+
+      // Get recent price changes (last 7 days) for all products
+      const { data: recentPricesData, error: pricesError } = await supabase
+        .from('prices')
+        .select(`
+          id,
+          price_bgn,
+          created_at,
+          products (
+            id,
+            name,
+            brand,
+            image_url
+          ),
+          supermarkets (
+            name
+          )
+        `)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (pricesError) {
+        console.error('Error fetching recent prices:', pricesError)
+      }
+
+      // Combine and format activity data
+      const activities = []
+
+      // Add price alerts
+      if (alertsData) {
+        alertsData.forEach(alert => {
+          activities.push({
+            id: `alert-${alert.id}`,
+            type: 'price_alert',
+            title: getAlertTitle(alert.alert_type),
+            description: `${alert.products?.name} - ${alert.old_price?.toFixed(2)} лв. → ${alert.new_price.toFixed(2)} лв.`,
+            product: alert.products,
+            supermarket: alert.supermarkets?.name,
+            oldPrice: alert.old_price,
+            newPrice: alert.new_price,
+            percentageChange: alert.percentage_change,
+            timestamp: alert.created_at,
+            icon: getAlertIcon(alert.alert_type)
+          })
+        })
+      }
+
+      // Add recent price changes (for products not in alerts)
+      if (recentPricesData) {
+        for (const price of recentPricesData) {
+          // Only add if not already covered by alerts
+          const hasAlert = alertsData?.some(alert =>
+            alert.products?.id === price.products?.id &&
+            Math.abs(new Date(alert.created_at).getTime() - new Date(price.created_at).getTime()) < 60000
+          )
+
+          if (!hasAlert) {
+            // Get previous price for this specific product and supermarket
+            const { data: previousPricesData } = await supabase
+              .from('prices')
+              .select('id, price_bgn, created_at')
+              .eq('product_id', price.products?.id)
+              .eq('supermarket_id', price.supermarket_id)
+              .neq('id', price.id)
+              .lt('created_at', price.created_at)
+              .order('created_at', { ascending: false })
+              .limit(1)
+
+            let percentageChange = null
+            let oldPrice = null
+
+            if (previousPricesData && previousPricesData.length > 0) {
+              const previousPrice = previousPricesData[0]
+              oldPrice = previousPrice.price_bgn
+              percentageChange = ((price.price_bgn - previousPrice.price_bgn) / previousPrice.price_bgn) * 100
+              console.log(`Price change for ${price.products?.name}: ${previousPrice.price_bgn} → ${price.price_bgn} (${percentageChange.toFixed(1)}%)`)
+            } else {
+              // If no previous price, show as new price with neutral indicator
+              percentageChange = 0
+              console.log(`New price entry for ${price.products?.name}: ${price.price_bgn} лв. (no previous price)`)
+            }
+
+            activities.push({
+              id: `price-${price.id}`,
+              type: 'price_update',
+              title: 'Нова цена',
+              description: `${price.products?.name} - ${price.price_bgn.toFixed(2)} лв.`,
+              product: price.products,
+              supermarket: price.supermarkets?.name,
+              newPrice: price.price_bgn,
+              oldPrice: oldPrice,
+              percentageChange: percentageChange,
+              timestamp: price.created_at,
+              icon: '💰'
+            })
+          }
+        }
+      }
+
+      // Sort by timestamp and limit
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      setActivityFeed(activities.slice(0, 15))
+
+    } catch (error) {
+      console.error('Error fetching activity feed:', error)
+      setActivityFeed([])
+    } finally {
+      setActivityLoading(false)
+    }
+  }
+
+
+
+  // Helper functions
+  const getAlertTitle = (alertType: string) => {
+    switch (alertType) {
+      case 'price_drop': return 'Намаление на цена'
+      case 'target_reached': return 'Достигната целева цена'
+      case 'significant_change': return 'Значителна промяна'
+      default: return 'Промяна в цената'
+    }
+  }
+
+  const getAlertIcon = (alertType: string) => {
+    switch (alertType) {
+      case 'price_drop': return '📉'
+      case 'target_reached': return '🎯'
+      case 'significant_change': return '⚡'
+      default: return '💰'
+    }
+  }
+
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -58,71 +358,291 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Табло</h1>
-              <p className="text-gray-600">
-                Добре дошли, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Потребител'}!
-              </p>
+      <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-soft">
+        <div className="max-w-7xl mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-medium float">
+                  <TrendingUp className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    Добре дошли в PriceTrack
+                  </h1>
+                  <p className="text-lg text-gray-600 font-medium">
+                    Здравейте, <span className="gradient-text-primary font-semibold">
+                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Потребител'}
+                    </span>!
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="hidden md:flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{favoriteProducts.length}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Любими</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{trackedProducts.length}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Следени</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{activityFeed.length}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Активност</div>
+                </div>
+              </div>
             </div>
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              Активен
-            </Badge>
+
+
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <p className="text-gray-600 text-lg">
-            Управлявайте вашите проследявани продукти и следете промените в цените.
-          </p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Bar */}
+        <div className="mb-8 animate-slide-up" ref={searchRef}>
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
+            <Input
+              ref={searchInputRef}
+              placeholder="Търсете продукти по име, марка или описание..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => searchTerm && setShowSearchResults(true)}
+              className="pl-14 pr-20 py-4 text-base w-full bg-white/80 backdrop-blur-sm border-white/20 shadow-soft focus-ring rounded-2xl text-gray-900 placeholder-gray-500"
+            />
+            {/* Enhanced Search Icon - positioned after input to ensure visibility */}
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-6 h-6 bg-blue-100 rounded-lg z-10 pointer-events-none">
+              <Search className="text-blue-600 h-4 w-4" />
+            </div>
+            {/* Enter key hint */}
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-1 text-gray-400">
+              <kbd className="px-2 py-1 text-xs bg-gray-100 border border-gray-300 rounded text-gray-600">
+                Enter
+              </kbd>
+            </div>
+          </form>
+          {/* Search Results */}
+          {searchTerm && showSearchResults && (
+            <div className="relative w-full mt-3 max-w-2xl mx-auto">
+              <Card className="absolute top-0 left-0 right-0 z-50 glass-card shadow-strong border-white/30 rounded-2xl animate-scale-in">
+                <CardContent className="p-0">
+                  {searchLoading ? (
+                    <SearchResultsSkeleton />
+                  ) : searchResults.length > 0 ? (
+                    <div className="max-h-96 overflow-y-auto">
+                      {searchResults.map((product) => (
+                        <Link key={product.id} href={getProductUrl(product, 'bg')}>
+                          <div
+                            className="p-4 hover:bg-white/60 transition-all duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer group"
+                            onClick={() => setShowSearchResults(false)}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                                {product.image_url ? (
+                                  <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover rounded-lg"
+                                  />
+                                ) : (
+                                  <div className="text-muted-foreground text-sm">📦</div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm line-clamp-1 text-card-foreground">
+                                  {product.name}
+                                </h4>
+                                {product.brand && (
+                                  <p className="text-xs text-muted-foreground">{product.brand}</p>
+                                )}
+                                {product.latest_price ? (
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <p className="text-sm font-bold text-green-600">
+                                      {product.latest_price.price.toFixed(2)} лв.
+                                    </p>
+                                    {product.latest_price.supermarket_name && (
+                                      <p className="text-xs text-muted-foreground">
+                                        в {product.latest_price.supermarket_name}
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground mt-1">Няма данни за цена</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                      {searchResults.length === 8 && (
+                        <div className="p-3 text-center border-t border-border">
+                          <Link href={`/bg/products?search=${encodeURIComponent(searchTerm)}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary"
+                              onClick={() => setShowSearchResults(false)}
+                            >
+                              Вижте всички резултати →
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-muted-foreground text-sm">Няма намерени продукти</p>
+                      <Link href="/bg/products/new">
+                        <Button variant="ghost" size="sm" className="text-primary mt-2">
+                          Добавете нов продукт
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
+
+
+        {/* Activity Feed */}
+        {activityFeed.length > 0 && (
+          <div className="mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="h-5 w-5 mr-2 text-blue-600 icon-bounce" />
+                  Последни промени в цените
+                </CardTitle>
+                <CardDescription>
+                  Актуални промени и известия за цени
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activityLoading ? (
+                  <ActivityFeedSkeleton />
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+                    {activityFeed.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-start space-x-3 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/20 hover:bg-white/80 transition-all duration-200 cursor-pointer group"
+                        onClick={() => {
+                          if (activity.product && activity.product.id) {
+                            const productUrl = getProductUrl({
+                              id: activity.product.id,
+                              name: activity.product.name,
+                              brand: activity.product.brand
+                            }, 'bg')
+                            router.push(productUrl)
+                          }
+                        }}
+                      >
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                          {activity.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm text-gray-900">
+                              {activity.title}
+                            </h4>
+                            <div className="flex items-center space-x-1">
+                              {activity.percentageChange !== null && activity.percentageChange !== undefined && (
+                                <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
+                                  activity.percentageChange < 0
+                                    ? 'bg-green-100 text-green-700'
+                                    : activity.percentageChange > 0
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {activity.percentageChange < 0 ? (
+                                    <TrendingDown className="h-3 w-3 mr-1" />
+                                  ) : activity.percentageChange > 0 ? (
+                                    <TrendingUp className="h-3 w-3 mr-1" />
+                                  ) : (
+                                    <div className="w-3 h-3 mr-1 bg-blue-500 rounded-full" />
+                                  )}
+                                  {activity.percentageChange === 0 ? 'Нова' : `${Math.abs(activity.percentageChange).toFixed(1)}%`}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-1">
+                            {activity.description}
+                          </p>
+                          {activity.supermarket && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              в {activity.supermarket}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-gray-400">
+                              {new Date(activity.timestamp).toLocaleDateString('bg-BG', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Useful Information Section - Moved to top */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-12 animate-fade-in">
           {/* Getting Started Guide */}
-          <Card>
+          <Card className="glass-card shadow-soft border-white/30 card-hover">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 icon-bounce">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                </div>
                 Как да започнете
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Полезни съвети за проследяване на цени
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">1</div>
                   <div>
-                    <p className="text-sm font-medium">Намерете продукти</p>
-                    <p className="text-xs text-gray-500">Търсете в нашата база от хиляди продукти</p>
+                    <p className="text-sm font-medium text-card-foreground">Намерете продукти</p>
+                    <p className="text-xs text-muted-foreground">Търсете в нашата база от хиляди продукти</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">2</div>
                   <div>
-                    <p className="text-sm font-medium">Добавете в любими</p>
-                    <p className="text-xs text-gray-500">Запазете продукти за бързо сравнение</p>
+                    <p className="text-sm font-medium text-card-foreground">Добавете в любими</p>
+                    <p className="text-xs text-muted-foreground">Запазете продукти за бързо сравнение</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">3</div>
                   <div>
-                    <p className="text-sm font-medium">Следете цените</p>
-                    <p className="text-xs text-gray-500">Получавайте известия при промени</p>
+                    <p className="text-sm font-medium text-card-foreground">Следете цените</p>
+                    <p className="text-xs text-muted-foreground">Получавайте известия при промени</p>
                   </div>
                 </div>
               </div>
-              <div className="pt-2 border-t">
-                <Link href="/bg/products" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              <div className="pt-2 border-t border-border">
+                <Link href="/bg/products" className="text-sm text-primary hover:text-primary/80 font-medium">
                   Започнете сега →
                 </Link>
               </div>
@@ -130,21 +650,21 @@ function DashboardContent() {
           </Card>
 
           {/* Latest News */}
-          <Card>
+          <Card className="glass-card shadow-soft border-white/30 card-hover">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Newspaper className="h-5 w-5 mr-2 text-green-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3 icon-pulse">
+                  <Newspaper className="h-4 w-4 text-white" />
+                </div>
                 Последни новини
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Актуална информация и обновления
               </CardDescription>
             </CardHeader>
             <CardContent>
               {newsLoading ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500">Зареждане на новини...</p>
-                </div>
+                <NewsCardSkeleton />
               ) : news.length > 0 ? (
                 <div className="space-y-4">
                   {news.map((newsItem) => (
@@ -152,14 +672,14 @@ function DashboardContent() {
                       key={newsItem.id}
                       className={`border-l-4 border-${newsItem.border_color}-400 pl-4`}
                     >
-                      <h4 className={`font-semibold text-${newsItem.text_color}-800`}>
+                      <h4 className="font-semibold text-card-foreground">
                         {newsItem.title}
                       </h4>
-                      <p className={`text-sm text-${newsItem.text_color}-700 mt-1`}>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {newsItem.content}
                       </p>
                       {newsItem.published_at && (
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                           {new Date(newsItem.published_at).toLocaleDateString('bg-BG')}
                         </p>
                       )}
@@ -168,7 +688,7 @@ function DashboardContent() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-gray-500">Няма налични новини в момента</p>
+                  <p className="text-muted-foreground">Няма налични новини в момента</p>
                 </div>
               )}
             </CardContent>
@@ -177,49 +697,53 @@ function DashboardContent() {
 
         {/* Favorite Products */}
         {favoriteProducts.length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-8 glass-card shadow-soft border-white/30 animate-slide-up">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Heart className="h-5 w-5 mr-2 text-red-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg flex items-center justify-center mr-3 icon-pulse">
+                  <Heart className="h-4 w-4 text-white" />
+                </div>
                 Любими продукти ({favoriteProducts.length})
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Вашите запазени продукти за бързо сравнение
               </CardDescription>
             </CardHeader>
             <CardContent>
               {favoritesLoading ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500">Зареждане на любими продукти...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {favoriteProducts.map((product) => (
                     <Link key={product.id} href={getProductUrl(product, 'bg')}>
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                        <CardContent className="p-4">
+                      <Card className="bg-white/60 backdrop-blur-sm border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 cursor-pointer card-hover group">
+                        <CardContent className="p-5">
                           <div className="flex items-start space-x-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-soft">
                               {product.image_url ? (
                                 <img
                                   src={product.image_url}
                                   alt={product.name}
-                                  className="w-full h-full object-cover rounded-lg"
+                                  className="w-full h-full object-cover rounded-xl"
                                 />
                               ) : (
-                                <div className="text-gray-400 text-lg">📦</div>
+                                <div className="text-gray-400 text-lg group-hover:scale-110 transition-transform">📦</div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                              <h4 className="font-medium text-sm line-clamp-2 mb-1 text-card-foreground">
                                 {product.name}
                               </h4>
                               {product.brand && (
-                                <p className="text-xs text-gray-500 mb-1">{product.brand}</p>
+                                <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
                               )}
                               {product.latest_price ? (
-                                <div>
-                                  <p className="text-sm font-bold text-green-600">
+                                <div className="group-hover:scale-105 transition-transform">
+                                  <p className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                                     {product.latest_price.price.toFixed(2)} лв.
                                   </p>
                                   <p className="text-xs text-gray-500">
@@ -227,7 +751,7 @@ function DashboardContent() {
                                   </p>
                                 </div>
                               ) : (
-                                <p className="text-xs text-gray-500">Няма данни за цена</p>
+                                <p className="text-xs text-gray-400">Няма данни за цена</p>
                               )}
                             </div>
                           </div>
@@ -243,20 +767,24 @@ function DashboardContent() {
 
         {/* Tracked Products */}
         {trackedProducts.length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-8 glass-card shadow-soft border-white/30 animate-slide-up">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="h-5 w-5 mr-2 text-blue-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3 icon-bounce">
+                  <Bell className="h-4 w-4 text-white" />
+                </div>
                 Следени продукти ({trackedProducts.length})
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Продукти за които получавате известия при промяна на цената
               </CardDescription>
             </CardHeader>
             <CardContent>
               {trackingLoading ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500">Зареждане на следени продукти...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -266,29 +794,29 @@ function DashboardContent() {
                       name: tracked.product?.name || 'Product',
                       brand: tracked.product?.brand
                     }, 'bg')}>
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                        <CardContent className="p-4">
+                      <Card className="bg-white/60 backdrop-blur-sm border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 cursor-pointer card-hover group">
+                        <CardContent className="p-5">
                           <div className="flex items-start space-x-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-soft">
                               {tracked.product?.image_url ? (
                                 <img
                                   src={tracked.product.image_url}
                                   alt={tracked.product.name}
-                                  className="w-full h-full object-cover rounded-lg"
+                                  className="w-full h-full object-cover rounded-xl"
                                 />
                               ) : (
-                                <div className="text-gray-400 text-lg">📦</div>
+                                <div className="text-blue-400 text-lg group-hover:scale-110 transition-transform">📦</div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                              <h4 className="font-medium text-sm line-clamp-2 mb-1 text-card-foreground">
                                 {tracked.product?.name || 'Неизвестен продукт'}
                               </h4>
                               {tracked.product?.brand && (
-                                <p className="text-xs text-gray-500 mb-1">{tracked.product.brand}</p>
+                                <p className="text-xs text-muted-foreground mb-1">{tracked.product.brand}</p>
                               )}
                               {tracked.target_price_bgn && (
-                                <p className="text-xs text-blue-600 mb-1">
+                                <p className="text-xs text-primary mb-1">
                                   Целева цена: {tracked.target_price_bgn.toFixed(2)} лв.
                                 </p>
                               )}
@@ -297,12 +825,12 @@ function DashboardContent() {
                                   <p className="text-sm font-bold text-green-600">
                                     {tracked.latest_price.price.toFixed(2)} лв.
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-muted-foreground">
                                     {tracked.latest_price.supermarket_name}
                                   </p>
                                 </div>
                               ) : (
-                                <p className="text-xs text-gray-500">Няма данни за цена</p>
+                                <p className="text-xs text-muted-foreground">Няма данни за цена</p>
                               )}
                             </div>
                           </div>
@@ -316,61 +844,85 @@ function DashboardContent() {
           </Card>
         )}
 
-        {/* Additional Useful Information */}
+        {/* Enhanced Empty State */}
         {(favoriteProducts.length === 0 && trackedProducts.length === 0) && (
-          <Card className="mt-6">
+          <Card className="mt-8 glass-card shadow-soft border-white/30 animate-slide-up">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Eye className="h-5 w-5 mr-2 text-green-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3 icon-bounce">
+                  <Eye className="h-4 w-4 text-white" />
+                </div>
                 Започнете да пестите
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Открийте как да следите цени и да пестите пари
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">Започнете да следите продукти, за да видите персонализирани препоръки</p>
-                <Link href="/bg/products">
-                  <Button>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Разгледайте продукти
-                  </Button>
-                </Link>
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-6 float">
+                  <ShoppingCart className="h-10 w-10 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  Добре дошли в PriceTrack!
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Започнете да следите продукти, за да получавате известия за промени в цените и да пестите пари при пазаруване.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/bg/products">
+                    <Button className="btn-primary-hover">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Разгледайте продукти
+                    </Button>
+                  </Link>
+                  <Link href="/bg/products/new">
+                    <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                      Добавете продукт
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Quick Links for Active Users */}
+        {/* Enhanced Quick Links for Active Users */}
         {(favoriteProducts.length > 0 || trackedProducts.length > 0) && (
-          <Card className="mt-6">
+          <Card className="mt-8 glass-card shadow-soft border-white/30 animate-slide-up">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
+              <CardTitle className="flex items-center text-gray-900">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3 icon-rotate">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                </div>
                 Полезни връзки
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Бързи връзки към важни секции
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Link href="/bg/notifications" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-                  <Bell className="h-8 w-8 text-blue-500 mb-2" />
-                  <span className="text-sm font-medium text-center">Известия</span>
-                  <span className="text-xs text-gray-500 text-center">Ценови алерти</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Link href="/bg/notifications" className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Bell className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 mb-1">Известия</span>
+                  <span className="text-xs text-gray-500">Ценови алерти</span>
                 </Link>
-                <Link href="/bg/discussions" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-                  <User className="h-8 w-8 text-green-500 mb-2" />
-                  <span className="text-sm font-medium text-center">Дискусии</span>
-                  <span className="text-xs text-gray-500 text-center">Общност</span>
+                <Link href="/bg/discussions" className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <MessageCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 mb-1">Дискусии</span>
+                  <span className="text-xs text-gray-500">Общност</span>
                 </Link>
-                <Link href="/bg/settings" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-                  <User className="h-8 w-8 text-gray-500 mb-2" />
-                  <span className="text-sm font-medium text-center">Настройки</span>
-                  <span className="text-xs text-gray-500 text-center">Профил</span>
+                <Link href="/bg/profile" className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <User className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 mb-1">Профил</span>
+                  <span className="text-xs text-gray-500">Настройки</span>
                 </Link>
               </div>
             </CardContent>

@@ -12,7 +12,7 @@ interface MobileHeaderProps {
 export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 lg:hidden bg-white/95 border-b border-gray-200 shadow-sm backdrop-blur-sm"
+      className="fixed top-0 left-0 right-0 z-55 lg:hidden bg-white border-b border-border shadow-sm"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingLeft: 'env(safe-area-inset-left)',
@@ -24,14 +24,14 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="p-2 hover:bg-gray-100 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="p-2 hover:bg-accent rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
           onClick={onMenuToggle}
           aria-label={isMenuOpen ? "Затвори меню" : "Отвори меню"}
         >
           {isMenuOpen ? (
-            <X className="h-6 w-6 text-gray-700" />
+            <X className="h-6 w-6 text-foreground" />
           ) : (
-            <Menu className="h-6 w-6 text-gray-700" />
+            <Menu className="h-6 w-6 text-foreground" />
           )}
         </Button>
 
@@ -44,13 +44,10 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
             <BarChart3 className="h-5 w-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-gray-900 leading-tight">PriceTrack</span>
-            <span className="text-xs text-gray-500 leading-tight">България</span>
+            <span className="text-lg font-bold text-foreground leading-tight">PriceTrack</span>
+            <span className="text-xs text-muted-foreground leading-tight">България</span>
           </div>
         </Link>
-
-        {/* Right side spacer to balance the layout */}
-        <div className="min-w-[44px]"></div>
       </div>
     </header>
   )

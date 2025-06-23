@@ -24,6 +24,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   ]
   const isNoSidebarPage = noSidebarPages.includes(pathname)
 
+  // Pages that should not have the footer component (landing page has its own footer)
+  const noFooterPages = ['/bg']
+  const shouldShowFooter = !noFooterPages.includes(pathname)
+
   // Don't show sidebar on specific pages or when auth is loading or user is not authenticated
   const shouldShowSidebar = !isNoSidebarPage && !loading && user
 
@@ -33,13 +37,13 @@ export function MainLayout({ children }: MainLayoutProps) {
         <main className="flex-1">
           {children}
         </main>
-        <Footer />
+        {shouldShowFooter && <Footer />}
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <SidebarNavigation />
 
@@ -52,7 +56,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </main>
         {/* Footer */}
-        <Footer />
+        {shouldShowFooter && <Footer />}
       </div>
     </div>
   )

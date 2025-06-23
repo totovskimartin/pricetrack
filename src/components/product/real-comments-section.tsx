@@ -203,7 +203,6 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .single()
 
       if (error) {
-        console.error('Error creating comment:', error)
         alert('Функцията за коментари ще бъде активирана скоро! Моля, изпълнете SQL скрипта в database/setup-user-interactions.sql')
         return
       }

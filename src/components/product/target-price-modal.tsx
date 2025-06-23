@@ -57,8 +57,8 @@ export function TargetPriceModal({
   const savings = targetPriceNum > 0 ? currentPrice - targetPriceNum : 0
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md bg-white text-gray-900">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -87,7 +87,7 @@ export function TargetPriceModal({
         <CardContent className="space-y-4">
           {/* Product Info */}
           <div className="bg-gray-50 p-3 rounded-lg">
-            <h4 className="font-medium text-sm mb-2 line-clamp-2">{productName}</h4>
+            <h4 className="font-medium text-sm mb-2 line-clamp-2 text-gray-900">{productName}</h4>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Текуща цена:</span>
               <div className="text-right">
@@ -160,7 +160,7 @@ export function TargetPriceModal({
 
           {/* Info Note */}
           <div className="text-xs text-gray-500 text-center pt-2 border-t">
-            {isTracking 
+            {isTracking
               ? 'Ще продължиш да получаваш известия за промени в цената'
               : 'Ще получаваш известия по имейл при промени в цената'
             }
