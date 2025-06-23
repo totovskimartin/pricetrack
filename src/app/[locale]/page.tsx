@@ -43,14 +43,14 @@ export default function HomePage() {
                 <p className="text-sm text-purple-200">България</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link href="/bg/login">
-                <Button variant="ghost" className="text-white hover:bg-white/20 border-white/30">
+                <Button variant="ghost" className="text-white hover:bg-white/20 border-white/30 text-sm sm:text-base px-2 sm:px-4">
                   Вход
                 </Button>
               </Link>
               <Link href="/bg/register">
-                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base px-2 sm:px-4">
                   Регистрация
                 </Button>
               </Link>

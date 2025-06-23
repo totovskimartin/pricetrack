@@ -376,6 +376,11 @@ select,
   .bottom-safe {
     bottom: max(12px, env(safe-area-inset-bottom));
   }
+
+  .safe-area-inset {
+    top: max(1rem, env(safe-area-inset-top));
+    left: max(1rem, env(safe-area-inset-left));
+  }
 }
 
 /* Mobile header and sidebar positioning */

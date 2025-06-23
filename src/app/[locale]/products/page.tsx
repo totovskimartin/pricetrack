@@ -54,7 +54,15 @@ function ProductsPageContent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedSupermarkets, setSelectedSupermarkets] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('name')
-  const [viewMode, setViewMode] = useState<'grid' | 'sheet'>('sheet')
+  const [viewMode, setViewMode] = useState<'grid' | 'sheet'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('products-view-mode')
+      if (saved === 'grid' || saved === 'sheet') {
+        return saved as 'grid' | 'sheet'
+      }
+    }
+    return 'grid'
+  })
   const router = useRouter()
   const searchParams = useSearchParams()
   const [allProducts, setAllProducts] = useState<Product[]>([])
@@ -264,6 +272,28 @@ function ProductsPageContent() {
     }
   }, [searchParams])
 
+  // Set responsive default view mode and force grid on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth < 640) { // sm breakpoint
+          // Force grid view on mobile for better UX
+          setViewMode('grid')
+        } else if (!localStorage.getItem('products-view-mode')) {
+          // Only set default on larger screens if no preference is saved
+          setViewMode('grid') // Desktop: use cards view by default
+        }
+      }
+    }
+
+    // Set initial view mode
+    handleResize()
+
+    // Listen for resize events
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // Initialize data
   useEffect(() => {
     const initializeData = async () => {
@@ -399,6 +429,14 @@ function ProductsPageContent() {
     return `${price.toFixed(2)} ${currency}`
   }
 
+  // Handle view mode change with localStorage persistence
+  const handleViewModeChange = (mode: 'grid' | 'sheet') => {
+    setViewMode(mode)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('products-view-mode', mode)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -430,7 +468,7 @@ function ProductsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       {/* Tour Guide */}
       <TourGuide
         steps={tourSteps}
@@ -442,20 +480,24 @@ function ProductsPageContent() {
         description="Нека ви покажем как да използвате тази страница"
       />
 
-      {/* Page Header */}
-      <div className="bg-card border-b border-border">
-        <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Продукти</h1>
-              <p className="text-muted-foreground">Търсете и сравнявайте цени на продукти</p>
+      {/* Modern Page Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Продукти
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Открийте най-добрите цени на вашите любими продукти
+              </p>
             </div>
             {canShowTour() && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsTourOpen(true)}
-                className="hidden sm:flex items-center space-x-2"
+                className="hidden sm:flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
               >
                 <HelpCircle className="h-4 w-4" />
                 <span>Покажи обиколката</span>
@@ -465,32 +507,32 @@ function ProductsPageContent() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        {/* Modern Search */}
+        <div className="mb-8">
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               placeholder="Търсете продукти по име, марка или описание..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-12 pr-4 py-3 text-base border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
             />
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Modern Filters */}
         <div className="mb-8">
           <Collapsible
             title="Филтри и сортиране"
             defaultOpen={false}
-            icon={<Filter className="h-5 w-5" />}
-            className="mb-4"
+            icon={<Filter className="h-5 w-5 text-blue-600" />}
+            className="mb-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm"
           >
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+            <div className="space-y-6 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Категории
                   </label>
                   <MultiSelect
@@ -501,12 +543,12 @@ function ProductsPageContent() {
                     selected={selectedCategories}
                     onChange={setSelectedCategories}
                     placeholder="Избери категории"
-                    className="w-full multi-select-trigger"
+                    className="w-full multi-select-trigger rounded-xl border-gray-200"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Супермаркети
                   </label>
                   <MultiSelect
@@ -517,16 +559,16 @@ function ProductsPageContent() {
                     selected={selectedSupermarkets}
                     onChange={setSelectedSupermarkets}
                     placeholder="Избери супермаркети"
-                    className="w-full"
+                    className="w-full rounded-xl border-gray-200"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Сортиране
                   </label>
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full rounded-xl border-gray-200">
                       <SelectValue placeholder="Сортиране" />
                     </SelectTrigger>
                     <SelectContent>
@@ -539,25 +581,33 @@ function ProductsPageContent() {
                 </div>
               </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex justify-start">
-                <div className="flex items-center border border-border rounded-lg p-1 bg-muted">
+              {/* Modern View Mode Toggle */}
+              <div className="flex justify-center sm:justify-start">
+                <div className="flex items-center bg-gray-100 rounded-xl p-1">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="h-8 px-3"
+                    onClick={() => handleViewModeChange('grid')}
+                    className={`h-9 px-4 rounded-lg transition-all ${
+                      viewMode === 'grid'
+                        ? 'bg-white shadow-sm text-blue-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   >
-                    <Grid className="h-4 w-4 mr-1" />
+                    <Grid className="h-4 w-4 mr-2" />
                     Карти
                   </Button>
                   <Button
                     variant={viewMode === 'sheet' ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setViewMode('sheet')}
-                    className="h-8 px-3"
+                    onClick={() => handleViewModeChange('sheet')}
+                    className={`h-9 px-4 rounded-lg transition-all hidden sm:flex ${
+                      viewMode === 'sheet'
+                        ? 'bg-white shadow-sm text-blue-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   >
-                    <List className="h-4 w-4 mr-1" />
+                    <List className="h-4 w-4 mr-2" />
                     Таблица
                   </Button>
                 </div>
@@ -566,14 +616,21 @@ function ProductsPageContent() {
           </Collapsible>
         </div>
 
-        {/* Product Count and Add Button */}
-        <div className="flex items-center justify-between mb-6">
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            {products.length} продукта
-          </Badge>
+        {/* Modern Product Count and Add Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+              {products.length} продукта
+            </div>
+            {products.length > 0 && (
+              <span className="text-gray-500 text-sm">
+                Намерени резултати
+              </span>
+            )}
+          </div>
           {user && (
             <Link href="/bg/products/new">
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2.5 rounded-xl">
                 <Plus className="h-4 w-4 mr-2" />
                 Добави продукт
               </Button>
@@ -583,74 +640,109 @@ function ProductsPageContent() {
 
         {/* Products Display */}
         {viewMode === 'grid' ? (
-          /* Grid View */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+          /* Compact Modern Grid View */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
             {products.map((product) => {
               const lowestPrice = getLowestPrice(product)
               const priceChange = getPriceChange(product)
 
               return (
-                <Card key={product.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <Card key={product.id} className="group overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
                   <Link href={getProductUrl(product, 'bg')}>
-                    <CardHeader className="pb-1 p-2">
-                      <div className="aspect-square bg-muted rounded-md mb-1 flex items-center justify-center">
+                    <div className="relative">
+                      {/* Product Image */}
+                      <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                         {product.image_url ? (
                           <img
                             src={product.image_url}
                             alt={product.name}
-                            className="w-full h-full object-cover rounded-md"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
-                          <div className="text-muted-foreground text-lg">📦</div>
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="text-gray-300 text-2xl sm:text-3xl">📦</div>
+                          </div>
                         )}
                       </div>
-                      <CardTitle className="text-xs line-clamp-2 leading-tight">{product.name}</CardTitle>
-                      <CardDescription className="line-clamp-1 text-xs">
-                        {product.brand && <span className="font-medium">{product.brand}</span>}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-2 pt-0">
-                      <div className="space-y-1">
-                        {/* Price */}
-                        {lowestPrice ? (
-                          <div>
-                            <div className="text-sm font-bold text-green-600">
-                              {formatPriceWithEUR(lowestPrice.price).bgn}
-                            </div>
-                            <div className="text-xs text-muted-foreground mb-0.5">
-                              {formatPriceWithEUR(lowestPrice.price).eur}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center justify-between">
-                              <span className="truncate">{lowestPrice.supermarket.name}</span>
-                              <span className="text-xs text-green-600 font-medium">Най-ниска</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-muted-foreground text-xs">Няма данни за цена</div>
-                        )}
 
-                        {/* Category */}
+                      {/* Category Badge */}
+                      <div className="absolute top-1.5 left-1.5">
+                        <Badge variant="secondary" className="bg-white/90 text-gray-700 text-xs font-medium px-1.5 py-0.5 backdrop-blur-sm hidden sm:block">
+                          {translateCategory(product.category)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Product Info */}
+                    <CardContent className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+                      {/* Product Name & Brand */}
+                      <div className="space-y-0.5">
+                        <h3 className="font-semibold text-gray-900 line-clamp-2 text-xs sm:text-sm leading-tight group-hover:text-blue-600 transition-colors">
+                          {product.name}
+                        </h3>
+                        {product.brand && (
+                          <p className="text-gray-500 text-xs font-medium truncate">
+                            {product.brand}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Price Info */}
+                      {lowestPrice ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-sm sm:text-base font-bold text-green-600">
+                              {formatPriceWithEUR(lowestPrice.price).bgn}
+                            </span>
+                            <span className="text-xs text-gray-500 hidden sm:inline">
+                              {formatPriceWithEUR(lowestPrice.price).eur}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {lowestPrice.supermarket.name}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-xs">Няма данни</div>
+                      )}
+
+                      {/* Category for mobile */}
+                      <div className="sm:hidden">
                         <Badge variant="outline" className="text-xs py-0 px-1 h-4">
                           {translateCategory(product.category)}
                         </Badge>
+                      </div>
 
-                        {/* Stats */}
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex items-center space-x-1.5">
-                            <div className="flex items-center">
-                              <MessageCircle className="h-2.5 w-2.5 mr-0.5" />
-                              {getProductStats(product.id).comments_count}
-                            </div>
-                            <div className="flex items-center">
-                              <Heart className="h-2.5 w-2.5 mr-0.5" />
-                              {getProductStats(product.id).favorites_count}
-                            </div>
-                            <div className="flex items-center">
-                              <Eye className="h-2.5 w-2.5 mr-0.5" />
-                              {getProductStats(product.id).tracking_count}
-                            </div>
+                      {/* Stats */}
+                      <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="flex items-center gap-0.5">
+                            <MessageCircle className="h-2.5 w-2.5" />
+                            <span>{getProductStats(product.id).comments_count}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            <Heart className="h-2.5 w-2.5" />
+                            <span>{getProductStats(product.id).favorites_count}</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 hidden sm:flex">
+                            <Eye className="h-2.5 w-2.5" />
+                            <span>{getProductStats(product.id).tracking_count}</span>
                           </div>
                         </div>
+
+                        {/* Price Change Indicator */}
+                        {priceChange && priceChange.type !== 'same' && (
+                          <div className={`flex items-center gap-0.5 text-xs ${
+                            priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
+                          }`}>
+                            {priceChange.type === 'increase' ? (
+                              <TrendingUp className="h-2.5 w-2.5" />
+                            ) : (
+                              <TrendingDown className="h-2.5 w-2.5" />
+                            )}
+                            <span className="hidden sm:inline">{priceChange.percentage}%</span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Link>
@@ -662,13 +754,13 @@ function ProductsPageContent() {
           /* Sheet View */
           <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full table-auto responsive-table-custom">
+              <table className="w-full table-fixed responsive-table-custom">
                 <thead className="bg-muted border-b">
                   <tr>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground">Продукт</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground w-3/5 sm:w-auto">Продукт</th>
                     <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground hidden sm:table-cell">Марка</th>
                     <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground hidden md:table-cell">Категория</th>
-                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground">Цена</th>
+                    <th className="text-left py-3 px-2 sm:px-4 font-medium text-foreground w-2/5 sm:w-auto">Цена</th>
                     <th className="text-center py-3 px-2 sm:px-4 font-medium text-foreground hidden lg:table-cell">Статистики</th>
                   </tr>
                 </thead>
@@ -680,9 +772,9 @@ function ProductsPageContent() {
 
                     return (
                       <tr key={product.id} className="hover:bg-muted/50 transition-colors">
-                        <td className="py-3 px-2 sm:px-4">
+                        <td className="py-3 px-2 sm:px-4 w-3/5 sm:w-auto">
                           <Link href={getProductUrl(product, 'bg')} className="flex items-center space-x-2 sm:space-x-3 hover:text-primary">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-muted rounded-md flex items-center justify-center flex-shrink-0">
                               {product.image_url ? (
                                 <img
                                   src={product.image_url}
@@ -690,11 +782,11 @@ function ProductsPageContent() {
                                   className="w-full h-full object-cover rounded-md"
                                 />
                               ) : (
-                                <div className="text-muted-foreground text-sm sm:text-lg">📦</div>
+                                <div className="text-muted-foreground text-xs sm:text-lg">📦</div>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-medium text-foreground truncate text-sm sm:text-base">{product.name}</div>
+                              <div className="font-medium text-foreground truncate text-xs sm:text-base">{product.name}</div>
                               <div className="text-xs sm:text-sm text-muted-foreground">
                                 <span className="sm:hidden">{product.brand || 'Без марка'}</span>
                                 <span className="hidden sm:inline">ID: {product.id.split('-')[0]}</span>
@@ -715,21 +807,21 @@ function ProductsPageContent() {
                             {translateCategory(product.category)}
                           </Badge>
                         </td>
-                        <td className="py-3 px-2 sm:px-4">
+                        <td className="py-3 px-2 sm:px-4 w-2/5 sm:w-auto">
                           {lowestPrice ? (
                             <div>
-                              <div className="font-bold text-green-600 text-sm sm:text-base">
+                              <div className="font-bold text-green-600 text-xs sm:text-base">
                                 {formatPriceWithEUR(lowestPrice.price).bgn}
                               </div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs text-muted-foreground hidden sm:block">
                                 {formatPriceWithEUR(lowestPrice.price).eur}
                               </div>
-                              <div className="text-xs text-green-600 font-medium mt-1">
-                                Най-ниска в {lowestPrice.supermarket.name}
+                              <div className="text-xs text-green-600 font-medium mt-1 truncate">
+                                <span className="hidden sm:inline">Най-ниска в </span>{lowestPrice.supermarket.name}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-sm">Няма данни</span>
+                            <span className="text-muted-foreground text-xs sm:text-sm">Няма данни</span>
                           )}
                         </td>
                         <td className="py-3 px-2 sm:px-4 hidden lg:table-cell">
@@ -757,23 +849,31 @@ function ProductsPageContent() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Modern Empty State */}
         {products.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-muted-foreground text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Няма намерени продукти
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Опитайте да промените филтрите или търсенето
-            </p>
-            <Button onClick={() => {
-              setSearchTerm('')
-              setSelectedCategories([])
-              setSelectedSupermarkets([])
-            }}>
-              Изчисти филтрите
-            </Button>
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Search className="h-12 w-12 text-blue-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                Няма намерени продукти
+              </h3>
+              <p className="text-gray-600 mb-8 leading-relaxed">
+                Не намерихме продукти, които да отговарят на вашите критерии. Опитайте да промените филтрите или търсенето.
+              </p>
+              <Button
+                onClick={() => {
+                  setSearchTerm('')
+                  setSelectedCategories([])
+                  setSelectedSupermarkets([])
+                }}
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Изчисти филтрите
+              </Button>
+            </div>
           </div>
         )}
       </div>

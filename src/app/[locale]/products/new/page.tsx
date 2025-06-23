@@ -424,18 +424,18 @@ export default function NewUserProduct() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto pl-16 pr-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
-            <div className="flex items-center space-x-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
               <Link href="/bg/products">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="self-start sm:self-auto">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Обратно
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Предложи продукт</h1>
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Предложи продукт</h1>
                 <p className="text-gray-600">Помогнете ни да разширим каталога с продукти</p>
               </div>
             </div>

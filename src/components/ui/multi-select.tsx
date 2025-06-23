@@ -86,11 +86,11 @@ export function MultiSelect({
             />
 
             {/* Dropdown */}
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
               {options.map((option) => (
                 <div
                   key={option.value}
-                  className="flex items-center px-3 py-2 hover:bg-muted cursor-pointer"
+                  className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleSelect(option.value)}
                 >
                   <div className="flex items-center justify-center w-4 h-4 mr-3 border border-border rounded">

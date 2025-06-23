@@ -112,10 +112,10 @@ function LoginForm() {
       </div>
 
       {/* Back to home link */}
-      <div className="absolute top-6 left-6 z-20">
-        <Link href="/bg" className="flex items-center text-white/80 hover:text-white transition-colors group">
-          <ArrowRight className="h-4 w-4 mr-2 rotate-180 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm">Обратно към началото</span>
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 safe-area-inset">
+        <Link href="/bg" className="flex items-center text-white/80 hover:text-white transition-colors group p-2 sm:p-0 rounded-lg sm:rounded-none hover:bg-white/10 sm:hover:bg-transparent">
+          <ArrowRight className="h-5 w-5 sm:h-4 sm:w-4 sm:mr-2 rotate-180 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm hidden sm:inline">Обратно към началото</span>
         </Link>
       </div>
 
