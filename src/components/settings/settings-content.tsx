@@ -17,7 +17,9 @@ import {
   Save,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Mail,
+  ChevronRight
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { getUserProfile } from '@/lib/user-utils'
@@ -252,6 +254,28 @@ export default function SettingsContent() {
         </div>
 
 
+
+        {/* Quick Settings Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Link href="/bg/profile/email-preferences">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">Имейл настройки</h3>
+                      <p className="text-sm text-gray-500">Управлявайте имейл известията</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
 
         {/* Profile Settings */}
         <Card>

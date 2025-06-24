@@ -31,3 +31,15 @@ export const createSupabaseAdminClient = () => {
     }
   })
 }
+
+// Add this function to create a client with custom auth settings
+export const createSupabaseClientWithCustomAuth = () => {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'pkce', // More secure flow
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  })
+}

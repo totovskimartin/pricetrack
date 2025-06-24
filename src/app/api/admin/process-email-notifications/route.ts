@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
             break
           
           default:
+            // Log unknown notification types for monitoring
             console.warn(`Unknown notification type: ${notification.type}`)
             // Mark as failed for unknown types
             await supabase.rpc('mark_email_notification_failed', {

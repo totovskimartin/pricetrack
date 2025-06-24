@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/providers/toast-provider'
+
 import { Eye, EyeOff, Loader2, CheckCircle, Check, X, BarChart3, ArrowRight } from 'lucide-react'
 
 export default function RegisterPage() {
@@ -245,6 +246,24 @@ export default function RegisterPage() {
         } catch (fallbackError) {
           console.log('Fallback user creation error:', fallbackError)
           // Continue anyway - the trigger might have worked
+        }
+
+        // Send welcome email via API
+        try {
+          await fetch('/api/send-welcome-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: data.user.id,
+              userEmail: data.user.email
+            })
+          })
+          console.log('Welcome email request sent successfully')
+        } catch (emailError) {
+          console.error('Failed to send welcome email request:', emailError)
+          // Don't fail registration if email fails
         }
 
         setSuccess(true)

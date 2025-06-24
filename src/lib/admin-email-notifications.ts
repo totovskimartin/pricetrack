@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { emailService } from './email-notifications'
+import { emailNotificationService } from './email/email-service'
 
 interface PriceSuggestionData {
   id: string
@@ -84,20 +84,27 @@ export async function notifyAdminsOfPriceSuggestion(suggestionData: PriceSuggest
         const adminName = admin.full_name || admin.username || admin.email
 
         try {
-          await emailService.sendAdminPriceSuggestionNotification({
-            adminEmail: admin.email,
-            adminName,
-            userName,
-            productName: product.name,
-            productSlug: product.slug,
-            supermarketName: supermarket.name,
-            suggestedPrice: suggestionData.suggested_price_bgn,
-            currentPrice: suggestionData.current_price_bgn,
-            notes: suggestionData.notes,
-            suggestionId: suggestionData.id,
-            productUrl,
-            adminPanelUrl
-          })
+          const details = `Потребител ${userName} предложи цена ${suggestionData.suggested_price_bgn} лв. за "${product.name}" в ${supermarket.name}.
+
+Текуща цена: ${suggestionData.current_price_bgn || 'Неизвестна'} лв.
+${suggestionData.notes ? `Бележки: ${suggestionData.notes}` : ''}
+
+Продукт: ${productUrl}
+Администрация: ${adminPanelUrl}`
+
+          await emailNotificationService.sendAdminNotification(
+            'Ново предложение за цена',
+            details,
+            adminPanelUrl,
+            {
+              suggestion_id: suggestionData.id,
+              product_id: suggestionData.product_id,
+              supermarket_id: suggestionData.supermarket_id,
+              suggested_price: suggestionData.suggested_price_bgn,
+              current_price: suggestionData.current_price_bgn,
+              user_id: suggestionData.suggested_by
+            }
+          )
 
           console.log(`✅ Admin email notification sent to ${admin.email}`)
           return true

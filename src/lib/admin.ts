@@ -131,7 +131,7 @@ export async function logAdminAction(
       })
 
     if (error) {
-      console.warn('Direct logging failed, trying API route:', error)
+      // Direct logging failed, try API route fallback
 
       // Fallback to API route
       const response = await fetch('/api/admin/log-action', {
@@ -149,14 +149,20 @@ export async function logAdminAction(
       })
 
       if (!response.ok) {
-        console.error('API logging also failed:', await response.text())
+        // API logging also failed - log only in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('API logging also failed:', await response.text())
+        }
         return false
       }
     }
 
     return true
   } catch (error) {
-    console.error('Failed to log admin action:', error)
+    // Log only in development to avoid console spam in production
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to log admin action:', error)
+    }
     // Don't throw error for logging failures to avoid breaking the main operation
     return false
   }
@@ -186,12 +192,14 @@ export async function logAdminActionServer(
       })
 
     if (error) {
+      // Keep error logging for server-side operations as they're important for monitoring
       console.error('Error logging admin action:', error)
       throw error
     }
 
     return true
   } catch (error) {
+    // Keep error logging for server-side operations as they're important for monitoring
     console.error('Failed to log admin action:', error)
     throw error
   }

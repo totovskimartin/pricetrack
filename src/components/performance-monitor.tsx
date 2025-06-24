@@ -61,7 +61,10 @@ export function PerformanceMonitor() {
       observer.observe({ entryTypes: ['paint', 'largest-contentful-paint', 'layout-shift', 'first-input'] })
     } catch (e) {
       // Fallback for browsers that don't support all entry types
-      console.warn('Some performance metrics not available:', e)
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Some performance metrics not available:', e)
+      }
     }
 
     // Basic navigation timing
@@ -230,7 +233,10 @@ export function useQueryPerformance() {
       // Track slow queries (> 1000ms)
       if (duration > 1000) {
         ;(window as any).__SLOW_QUERY_COUNT__ = ((window as any).__SLOW_QUERY_COUNT__ || 0) + 1
-        console.warn(`Slow query detected: ${queryName} took ${duration}ms`)
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Slow query detected: ${queryName} took ${duration}ms`)
+        }
       }
     }
   }

@@ -243,6 +243,7 @@ export default function DiscussionsModeration() {
             .eq('id', discussionId)
 
           if (error) {
+            // Keep error logging for admin operations as they're important for monitoring
             console.error('Error rejecting discussion:', error)
             return
           }
@@ -251,7 +252,10 @@ export default function DiscussionsModeration() {
           try {
             await logAdminAction(user.id, 'reject_discussion', 'discussion', discussionId)
           } catch (logError) {
-            console.warn('Failed to log admin action:', logError)
+            // Log admin action failures only in development
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Failed to log admin action:', logError)
+            }
           }
 
           invalidateDiscussionCache()

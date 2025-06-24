@@ -19,6 +19,31 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
+  // Webpack configuration
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+    // Exclude SendGrid and other Node.js modules from client-side bundle
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        url: false,
+        querystring: false,
+        http: false,
+        https: false,
+        net: false,
+        tls: false,
+        zlib: false,
+      };
+    }
+    return config;
+  },
+
   // Experimental features for better performance
   experimental: {
     // Enable optimistic client cache

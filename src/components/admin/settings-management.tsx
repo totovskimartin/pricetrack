@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/providers/auth-provider'
-import { updateAdminEmailPreferences } from '@/lib/admin-email-notifications'
+
 import {
   Settings,
   Save,
@@ -103,9 +103,19 @@ export default function SettingsManagement() {
 
     setEmailPrefsLoading(true)
     try {
-      const success = await updateAdminEmailPreferences(user.id, enabled)
+      const response = await fetch('/api/admin/email-preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email_notifications_enabled: enabled
+        })
+      })
 
-      if (success) {
+      const data = await response.json()
+
+      if (response.ok && data.success) {
         setEmailNotifications(enabled)
         setMessage({
           type: 'success',
@@ -114,7 +124,7 @@ export default function SettingsManagement() {
       } else {
         setMessage({
           type: 'error',
-          text: 'Грешка при обновяване на email настройките'
+          text: data.error || 'Грешка при обновяване на email настройките'
         })
       }
     } catch (error) {

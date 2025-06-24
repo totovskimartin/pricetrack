@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) {
+      // Keep error logging for API routes as they're important for monitoring
       console.error('Error logging admin action:', error)
       return NextResponse.json(
         { error: 'Failed to log action' },
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
 
   } catch (error) {
+    // Keep error logging for API routes as they're important for monitoring
     console.error('Error in log action API:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

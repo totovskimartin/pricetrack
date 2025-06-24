@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
-import { emailService } from '@/lib/email-notifications'
+
 import { Search, Plus, Save, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 
 interface Product {
@@ -197,27 +197,56 @@ export default function PriceUpdatesPage() {
         const currentPrice = currentPrices?.find(p => p.supermarket_id === newPrice.supermarket_id)
 
         for (const tracking of trackingUsers) {
-          const shouldNotify = 
-            // Price dropped below target price
-            (tracking.target_price_bgn && newPrice.price_bgn <= tracking.target_price_bgn) ||
-            // Significant price drop (more than 10%)
-            (currentPrice && ((currentPrice.price_bgn - newPrice.price_bgn) / currentPrice.price_bgn) > 0.1)
-
           // Extract email from the users array (Supabase returns joined tables as arrays)
           const userEmail = tracking.users?.[0]?.email
+          if (!userEmail) continue
 
-          if (shouldNotify && userEmail) {
-            await emailService.sendPriceDropNotification({
-              userId: tracking.user_id,
-              userEmail: userEmail,
-              productId: product.id,
-              productName: product.name,
-              oldPrice: currentPrice?.price_bgn || newPrice.price_bgn,
-              newPrice: newPrice.price_bgn,
-              targetPrice: tracking.target_price_bgn,
-              supermarketName: supermarket?.name || 'Неизвестен',
-              productUrl: `${window.location.origin}/bg/products/${product.id}`
-            })
+          const oldPrice = currentPrice?.price_bgn || newPrice.price_bgn
+          const priceDrop = oldPrice - newPrice.price_bgn
+          const percentageChange = (priceDrop / oldPrice) * 100
+
+          // Send notification via API
+          let shouldNotify = false
+          let notificationType = ''
+
+          // Check if target price is reached
+          if (tracking.target_price_bgn && newPrice.price_bgn <= tracking.target_price_bgn) {
+            shouldNotify = true
+            notificationType = 'target_reached'
+          }
+          // Check for significant price drop (more than 10%)
+          else if (currentPrice && percentageChange > 10) {
+            shouldNotify = true
+            notificationType = 'price_drop'
+          }
+
+          if (shouldNotify) {
+            try {
+              await fetch('/api/send-price-notification', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  type: notificationType,
+                  userId: tracking.user_id,
+                  userEmail: userEmail,
+                  productData: {
+                    productId: product.id,
+                    productName: product.name,
+                    productBrand: product.brand,
+                    productImage: product.image_url,
+                    oldPrice: oldPrice,
+                    newPrice: newPrice.price_bgn,
+                    currentPrice: newPrice.price_bgn,
+                    targetPrice: tracking.target_price_bgn,
+                    supermarketName: supermarket?.name || 'Неизвестен'
+                  }
+                })
+              })
+            } catch (emailError) {
+              console.error('Failed to send price notification:', emailError)
+            }
           }
         }
       }

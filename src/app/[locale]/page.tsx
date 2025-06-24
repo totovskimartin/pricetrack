@@ -91,7 +91,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/bg/login">
-              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg backdrop-blur-sm">
+              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent px-8 py-4 text-lg backdrop-blur-sm">
                 Вече имам акаунт
               </Button>
             </Link>
@@ -388,14 +388,14 @@ export default function HomePage() {
 
           {/* Bottom */}
           <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 PriceTrack България. Всички права запазени.
+            <div className="text-white text-sm mb-4 md:mb-0">
+              © 2025 PriceTrack България. Всички права запазени.
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-xs text-gray-500 bg-white/10 px-3 py-1 rounded-full">
+              <span className="text-xs text-white bg-white/10 px-3 py-1 rounded-full">
                 v0.3-beta
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-white">
                 Направено с ❤️ в България
               </span>
             </div>

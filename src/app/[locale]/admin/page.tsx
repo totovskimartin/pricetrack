@@ -26,7 +26,8 @@ import {
   Check,
   X,
   DollarSign,
-  Bell
+  Bell,
+  Mail
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -38,6 +39,7 @@ import UsersManagement from '@/components/admin/users-management'
 import SettingsManagement from '@/components/admin/settings-management'
 import AlertsManagement from '@/components/admin/alerts-management'
 import NewsManagement from '@/components/admin/news-management'
+import EmailSystemManagement from '@/components/admin/email-system-management'
 import { MobileAdminLayout } from '@/components/admin/mobile-admin-layout'
 import { MobileAdminDashboard } from '@/components/admin/mobile-admin-dashboard'
 import { MobileUsersManagement } from '@/components/admin/mobile-users-management'
@@ -515,6 +517,10 @@ function AdminDashboard() {
           <NewsManagement />
         )}
 
+        {activeTab === 'email-system' && ['admin', 'super_admin'].includes(user.role) && (
+          <EmailSystemManagement />
+        )}
+
         {activeTab === 'settings' && user.role === 'super_admin' && (
           <SettingsManagement />
         )}
@@ -717,10 +723,27 @@ function AdminDashboard() {
                 </>
               )}
 
+              {/* System Management */}
+              {['admin', 'super_admin'].includes(user.role) && (
+                <>
+                  <div className="border-t border-gray-200 my-4"></div>
+                  <button
+                    onClick={() => handleTabChange('email-system')}
+                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
+                      activeTab === 'email-system'
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <Mail className="h-5 w-5" />
+                    <span>Имейл система</span>
+                  </button>
+                </>
+              )}
+
               {/* Settings */}
               {user.role === 'super_admin' && (
                 <>
-                  <div className="border-t border-gray-200 my-4"></div>
                   <button
                     onClick={() => handleTabChange('settings')}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
@@ -753,6 +776,7 @@ function AdminDashboard() {
               {canManageUsers && <option value="users">👥 Потребители</option>}
               <option value="alerts">🔔 Известия {unreadCount > 0 ? `(${unreadCount})` : ''}</option>
               <option value="news">📰 Новини</option>
+              {['admin', 'super_admin'].includes(user.role) && <option value="email-system">📧 Имейл система</option>}
               {user.role === 'super_admin' && <option value="settings">⚙️ Настройки</option>}
             </select>
           </div>
@@ -955,6 +979,11 @@ function AdminDashboard() {
           {/* News Content */}
           {activeTab === 'news' && (
             <NewsManagement />
+          )}
+
+          {/* Email System Content */}
+          {activeTab === 'email-system' && ['admin', 'super_admin'].includes(user.role) && (
+            <EmailSystemManagement />
           )}
 
           {/* Settings Content */}
