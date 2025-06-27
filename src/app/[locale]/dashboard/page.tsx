@@ -304,7 +304,7 @@ function DashboardContent() {
       }
 
       // Get recent price alerts for the user (if logged in)
-      let alertsData = []
+      let alertsData: any[] = []
       if (user?.id) {
         const { data: userAlertsData, error: alertsError } = await supabase
           .from('price_alerts')
@@ -430,11 +430,11 @@ function DashboardContent() {
       }
 
       // Sort by timestamp and limit
-      activities.sort((a, b) => new Date(b.created_at || b.timestamp).getTime() - new Date(a.created_at || a.timestamp).getTime())
+      activities.sort((a, b) => new Date(b.created_at || (a as any).timestamp || new Date()).getTime() - new Date(a.created_at || (a as any).timestamp || new Date()).getTime())
       const finalActivities = activities.slice(0, 15)
 
       console.log(`✅ Final activity feed: ${finalActivities.length} items`)
-      setActivityFeed(finalActivities)
+      setActivityFeed(finalActivities as any)
 
     } catch (error) {
       console.error('❌ Error fetching activity feed:', error)
@@ -467,10 +467,7 @@ function DashboardContent() {
 
 
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/bg')
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -662,8 +659,8 @@ function DashboardContent() {
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
                           {activity.icon || (
                             activity.type === 'price_alert' ? '🔔' :
-                            activity.change_type === 'decrease' ? '📉' :
-                            activity.change_type === 'increase' ? '📈' : '🆕'
+                            (activity as any).change_type === 'decrease' ? '📉' :
+                            (activity as any).change_type === 'increase' ? '📈' : '🆕'
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -690,7 +687,7 @@ function DashboardContent() {
                                   {`${Math.abs(activity.percentageChange).toFixed(1)}%`}
                                 </div>
                               )}
-                              {activity.change_type === 'new' && (
+                              {(activity as any).change_type === 'new' && (
                                 <div className="flex items-center text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                                   <div className="w-3 h-3 mr-1 bg-blue-500 rounded-full" />
                                   Нова цена
@@ -700,9 +697,9 @@ function DashboardContent() {
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-1">
                             {activity.description ||
-                             (activity.old_price ?
+                             (activity.old_price && activity.new_price ?
                                `${activity.old_price.toFixed(2)} лв. → ${activity.new_price.toFixed(2)} лв.` :
-                               `Нова цена: ${activity.new_price.toFixed(2)} лв.`
+                               activity.new_price ? `Нова цена: ${activity.new_price.toFixed(2)} лв.` : 'Промяна в цената'
                              )
                             }
                           </p>

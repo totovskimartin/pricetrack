@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, Loader2, BarChart3, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 
 function LoginForm() {
   const [emailOrUsername, setEmailOrUsername] = useState('')

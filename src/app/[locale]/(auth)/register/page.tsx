@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/providers/toast-provider'
 
-import { Eye, EyeOff, Loader2, CheckCircle, Check, X, BarChart3, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Loader2, CheckCircle, Check, X, ArrowRight } from 'lucide-react'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
