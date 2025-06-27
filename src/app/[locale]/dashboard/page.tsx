@@ -6,10 +6,10 @@ import { supabase } from '@/lib/supabase'
 import { getProductUrl } from '@/lib/slug-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+
 import { Input } from '@/components/ui/input'
 import { SearchResultsSkeleton, ProductCardSkeleton, ActivityFeedSkeleton, NewsCardSkeleton } from '@/components/ui/skeleton'
-import { User, LogOut, TrendingUp, ShoppingCart, Heart, Eye, Bell, Newspaper, Search, Activity, TrendingDown, Clock, ArrowUpRight, ArrowDownRight, MessageCircle } from 'lucide-react'
+import { User, TrendingUp, ShoppingCart, Heart, Eye, Bell, Newspaper, Search, Activity, TrendingDown, MessageCircle } from 'lucide-react'
 import { useFavorites } from '@/hooks/use-favorites'
 import { usePriceTracking } from '@/hooks/use-price-tracking'
 import { useAuth } from '@/components/providers/auth-provider'
@@ -17,22 +17,68 @@ import { AuthGuard } from '@/components/auth/auth-guard'
 import Link from 'next/link'
 
 
+// Extended product type for search results with latest price
+interface ProductWithLatestPrice {
+  id: string
+  name: string
+  category: string
+  brand?: string
+  image_url?: string
+  latest_price?: {
+    price: number
+    supermarket_name?: string
+  } | null
+}
+
 function DashboardContent() {
   const { user } = useAuth()
   const router = useRouter()
   const { favoriteProducts, loading: favoritesLoading } = useFavorites()
   const { trackedProducts, loading: trackingLoading } = usePriceTracking()
-  const [news, setNews] = useState<any[]>([])
+  const [news, setNews] = useState<Array<{
+    id: string
+    title: string
+    content: string
+    type: string
+    priority: number
+    border_color: string
+    text_color: string
+    published_at: string
+    expires_at: string | null
+  }>>([])
   const [newsLoading, setNewsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<ProductWithLatestPrice[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Activity Feed State
-  const [activityFeed, setActivityFeed] = useState<any[]>([])
+  const [activityFeed, setActivityFeed] = useState<Array<{
+    id: string
+    type: string
+    product_name?: string
+    old_price?: number
+    new_price?: number
+    supermarket_name?: string
+    created_at?: string
+    // For price alerts
+    title?: string
+    description?: string
+    product?: {
+      id: string
+      name: string
+      brand?: string
+      image_url?: string
+    }
+    supermarket?: string
+    oldPrice?: number
+    newPrice?: number
+    percentageChange?: number
+    timestamp?: string
+    icon?: string
+  }>>([])
   const [activityLoading, setActivityLoading] = useState(true)
 
   // Fetch news from database
@@ -113,6 +159,7 @@ function DashboardContent() {
           const latestPrice = pricesData?.find(price => price.product_id === product.id)
           return {
             ...product,
+            brand: product.brand || undefined, // Convert null to undefined for compatibility
             latest_price: latestPrice ? {
               price: latestPrice.price_bgn,
               supermarket_name: (latestPrice.supermarkets as any)?.name
@@ -304,22 +351,18 @@ function DashboardContent() {
             activities.push({
               id: `price-${price.id}`,
               type: 'price_update',
-              title: 'Нова цена',
-              description: `${(price.products as any)?.name} - ${price.price_bgn.toFixed(2)} лв.`,
-              product: price.products,
-              supermarket: (price.supermarkets as any)?.name,
-              newPrice: price.price_bgn,
-              oldPrice: oldPrice,
-              percentageChange: percentageChange,
-              timestamp: price.created_at,
-              icon: '💰'
+              product_name: (price.products as any)?.name || 'Неизвестен продукт',
+              supermarket_name: (price.supermarkets as any)?.name || 'Неизвестен супермаркет',
+              new_price: price.price_bgn,
+              old_price: oldPrice,
+              created_at: price.created_at
             })
           }
         }
       }
 
       // Sort by timestamp and limit
-      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setActivityFeed(activities.slice(0, 15))
 
     } catch (error) {
@@ -585,7 +628,7 @@ function DashboardContent() {
                           )}
                           <div className="flex items-center justify-between mt-2">
                             <p className="text-xs text-gray-400">
-                              {new Date(activity.timestamp).toLocaleDateString('bg-BG', {
+                              {new Date(activity.timestamp || activity.created_at || new Date()).toLocaleDateString('bg-BG', {
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',

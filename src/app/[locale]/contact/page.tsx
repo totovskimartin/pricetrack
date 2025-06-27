@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Mail, Phone, MapPin, Send } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -14,12 +15,55 @@ export default function ContactPage() {
     subject: '',
     message: ''
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null
+    message: string
+  }>({ type: null, message: '' })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log('Contact form submitted:', formData)
-    // You would typically send this to your backend
+    setIsSubmitting(true)
+    setSubmitStatus({ type: null, message: '' })
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        setSubmitStatus({
+          type: 'success',
+          message: result.message || 'Съобщението е изпратено успешно!'
+        })
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        })
+      } else {
+        setSubmitStatus({
+          type: 'error',
+          message: result.error || result.message || 'Възникна грешка при изпращането на съобщението.'
+        })
+      }
+    } catch (error) {
+      console.error('Error submitting contact form:', error)
+      setSubmitStatus({
+        type: 'error',
+        message: 'Възникна грешка при изпращането на съобщението. Моля, опитайте отново.'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -72,6 +116,7 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Вашето име"
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -86,6 +131,7 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="your@email.com"
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -100,6 +146,7 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     placeholder="Темата на съобщението"
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -114,11 +161,37 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Вашето съобщение..."
+                    disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  <Send className="h-4 w-4 mr-2" />
-                  Изпрати съобщение
+
+                {/* Status Messages */}
+                {submitStatus.type && (
+                  <div className={`p-4 rounded-lg ${
+                    submitStatus.type === 'success'
+                      ? 'bg-green-50 border border-green-200 text-green-800'
+                      : 'bg-red-50 border border-red-200 text-red-800'
+                  }`}>
+                    <p className="text-sm font-medium">{submitStatus.message}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Изпращане...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Изпрати съобщение
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -183,9 +256,9 @@ export default function ContactPage() {
                     Проверете нашата страница с помощ за бързи отговори на често задавани въпроси.
                   </p>
                   <Button variant="outline" asChild>
-                    <a href="/bg/help">
+                    <Link href="/bg/help">
                       Вижте помощ и FAQ
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </CardContent>

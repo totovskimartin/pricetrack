@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess(true)
-    } catch (err) {
+    } catch {
       setError('Възникна неочаквана грешка')
     } finally {
       setLoading(false)

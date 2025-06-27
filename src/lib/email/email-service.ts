@@ -6,9 +6,11 @@ import {
   getTargetPriceReachedTemplate,
   getWelcomeEmailTemplate,
   getAdminNotificationTemplate,
+  getContactMessageTemplate,
   type PriceAlertData,
   type WelcomeEmailData,
-  type AdminNotificationData
+  type AdminNotificationData,
+  type ContactMessageData
 } from './templates'
 
 export interface UserEmailPreferences {
@@ -416,6 +418,52 @@ class EmailNotificationService {
     }
 
     return { success, failed }
+  }
+
+  /**
+   * Send contact message to admin
+   */
+  async sendContactMessage(
+    senderName: string,
+    senderEmail: string,
+    subject: string,
+    message: string
+  ): Promise<boolean> {
+    try {
+      // Prepare template data
+      const templateData: ContactMessageData = {
+        senderName,
+        senderEmail,
+        subject,
+        message,
+        timestamp: new Date().toLocaleString('bg-BG', {
+          timeZone: 'Europe/Sofia',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      }
+
+      // Generate email content
+      const { html, text } = getContactMessageTemplate(templateData)
+
+      // Get admin email from environment
+      const adminEmail = process.env.SENDGRID_ADMIN_EMAIL || 'admin@pricetrack.bg'
+
+      // Queue contact message email to admin
+      return await emailQueue.queueContactMessage(
+        adminEmail,
+        senderEmail, // Reply-to address
+        subject,
+        html,
+        text
+      )
+    } catch (error) {
+      console.error('Error sending contact message:', error)
+      return false
+    }
   }
 }
 

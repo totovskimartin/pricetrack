@@ -53,8 +53,10 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
 
   const fetchDiscussions = async () => {
     try {
-      // Try the new product_comments table first
-      const { data: commentsData, error: commentsError } = await supabase
+      // Use product_comments table since that's the correct table for product-specific comments
+      console.log('Fetching comments for product:', productId)
+
+      const { data, error } = await supabase
         .from('product_comments')
         .select(`
           id,
@@ -69,90 +71,41 @@ export function RealCommentsSection({ productId }: RealCommentsSectionProps) {
         .is('parent_comment_id', null) // Only top-level comments
         .order('created_at', { ascending: false })
 
-      if (!commentsError && commentsData) {
-        // Transform comments to discussions format
-        const transformedDiscussions = commentsData.map(comment => ({
+      if (!error && data) {
+        // Transform comments to discussions format for display
+        const transformedDiscussions = data.map(comment => ({
           id: comment.id,
           title: comment.content.substring(0, 50) + (comment.content.length > 50 ? '...' : ''),
           content: comment.content,
           upvotes: comment.likes,
           downvotes: comment.dislikes,
-          is_pinned: false, // Not supported in current schema
+          is_pinned: false,
           created_at: comment.created_at,
           user_id: comment.user_id
         }))
 
         setDiscussions(transformedDiscussions)
+        console.log('Found product comments:', transformedDiscussions.length)
 
         // Fetch replies for each comment
-        if (commentsData.length > 0) {
-          for (const comment of commentsData) {
+        if (data.length > 0) {
+          for (const comment of data) {
             await fetchCommentReplies(comment.id)
           }
         }
       } else {
-        // Fallback to old discussions table
-        const { data, error } = await supabase
-          .from('discussions')
-          .select(`
-            id,
-            title,
-            content,
-            upvotes,
-            downvotes,
-            is_pinned,
-            created_at,
-            user_id
-          `)
-          .eq('product_id', productId)
-          .order('is_pinned', { ascending: false })
-          .order('created_at', { ascending: false })
-
-        if (!error && data) {
-          setDiscussions(data || [])
-
-          // Fetch comments for each discussion
-          if (data && data.length > 0) {
-            for (const discussion of data) {
-              await fetchComments(discussion.id)
-            }
-          }
-        } else {
-          setDiscussions([])
-        }
+        console.error('Error fetching product comments:', error)
+        setDiscussions([])
       }
     } catch (error) {
+      console.error('Exception fetching product comments:', error)
       setDiscussions([])
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchComments = async (discussionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('discussion_comments')
-        .select(`
-          id,
-          content,
-          upvotes,
-          downvotes,
-          created_at,
-          user_id
-        `)
-        .eq('discussion_id', discussionId)
-        .order('created_at', { ascending: true })
 
-      if (!error && data) {
-        setComments(prev => ({
-          ...prev,
-          [discussionId]: data
-        }))
-      }
-    } catch (error) {
-      // Handle silently
-    }
-  }
 
   const fetchCommentReplies = async (commentId: string) => {
     try {

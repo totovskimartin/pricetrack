@@ -674,75 +674,87 @@ function ProductsPageContent() {
                     </div>
 
                     {/* Product Info */}
-                    <CardContent className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
-                      {/* Product Name & Brand */}
-                      <div className="space-y-0.5">
+                    <CardContent className="p-2 sm:p-3 flex flex-col h-36 sm:h-40">
+                      {/* Product Name & Brand - Fixed height section */}
+                      <div className="flex-shrink-0 h-10 sm:h-12 flex flex-col justify-start">
                         <h3 className="font-semibold text-gray-900 line-clamp-2 text-xs sm:text-sm leading-tight group-hover:text-blue-600 transition-colors">
                           {product.name}
                         </h3>
-                        {product.brand && (
-                          <p className="text-gray-500 text-xs font-medium truncate">
-                            {product.brand}
-                          </p>
-                        )}
+                        <div className="h-4 flex items-start">
+                          {product.brand && (
+                            <p className="text-gray-500 text-xs font-medium truncate">
+                              {product.brand}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Price Info */}
-                      {lowestPrice ? (
-                        <div className="space-y-0.5">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-sm sm:text-base font-bold text-green-600">
-                              {formatPriceWithEUR(lowestPrice.price).bgn}
-                            </span>
-                            <span className="text-xs text-gray-500 hidden sm:inline">
-                              {formatPriceWithEUR(lowestPrice.price).eur}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {lowestPrice.supermarket.name}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 text-xs">Няма данни</div>
-                      )}
+                      {/* Flexible spacer */}
+                      <div className="flex-1"></div>
 
-                      {/* Category for mobile */}
-                      <div className="sm:hidden">
-                        <Badge variant="outline" className="text-xs py-0 px-1 h-4">
-                          {translateCategory(product.category)}
-                        </Badge>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <div className="flex items-center gap-0.5">
-                            <MessageCircle className="h-2.5 w-2.5" />
-                            <span>{getProductStats(product.id).comments_count}</span>
-                          </div>
-                          <div className="flex items-center gap-0.5">
-                            <Heart className="h-2.5 w-2.5" />
-                            <span>{getProductStats(product.id).favorites_count}</span>
-                          </div>
-                          <div className="flex items-center gap-0.5 hidden sm:flex">
-                            <Eye className="h-2.5 w-2.5" />
-                            <span>{getProductStats(product.id).tracking_count}</span>
-                          </div>
+                      {/* Bottom section - Fixed height */}
+                      <div className="flex-shrink-0 h-16 sm:h-18 flex flex-col justify-end">
+                        {/* Price Info - Fixed height */}
+                        <div className="h-8 sm:h-10 flex flex-col justify-center">
+                          {lowestPrice ? (
+                            <div className="space-y-0.5">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-sm sm:text-base font-bold text-green-600">
+                                  {formatPriceWithEUR(lowestPrice.price).bgn}
+                                </span>
+                                <span className="text-xs text-gray-500 hidden sm:inline">
+                                  {formatPriceWithEUR(lowestPrice.price).eur}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                {lowestPrice.supermarket.name}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-gray-400 text-xs">Няма данни</div>
+                          )}
                         </div>
 
-                        {/* Price Change Indicator */}
-                        {priceChange && priceChange.type !== 'same' && (
-                          <div className={`flex items-center gap-0.5 text-xs ${
-                            priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
-                          }`}>
-                            {priceChange.type === 'increase' ? (
-                              <TrendingUp className="h-2.5 w-2.5" />
-                            ) : (
-                              <TrendingDown className="h-2.5 w-2.5" />
+                        {/* Category for mobile - Fixed height */}
+                        <div className="sm:hidden h-5 flex items-center">
+                          <Badge variant="outline" className="text-xs py-0 px-1 h-4">
+                            {translateCategory(product.category)}
+                          </Badge>
+                        </div>
+
+                        {/* Stats - Fixed height */}
+                        <div className="h-6 flex items-center justify-between pt-1 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <div className="flex items-center gap-0.5">
+                              <MessageCircle className="h-2.5 w-2.5" />
+                              <span>{getProductStats(product.id).comments_count}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              <Heart className="h-2.5 w-2.5" />
+                              <span>{getProductStats(product.id).favorites_count}</span>
+                            </div>
+                            <div className="hidden sm:flex items-center gap-0.5">
+                              <Eye className="h-2.5 w-2.5" />
+                              <span>{getProductStats(product.id).tracking_count}</span>
+                            </div>
+                          </div>
+
+                          {/* Price Change Indicator - Fixed width area */}
+                          <div className="w-12 sm:w-16 flex justify-end">
+                            {priceChange && priceChange.type !== 'same' && (
+                              <div className={`flex items-center gap-0.5 text-xs ${
+                                priceChange.type === 'increase' ? 'text-red-500' : 'text-green-500'
+                              }`}>
+                                {priceChange.type === 'increase' ? (
+                                  <TrendingUp className="h-2.5 w-2.5" />
+                                ) : (
+                                  <TrendingDown className="h-2.5 w-2.5" />
+                                )}
+                                <span className="hidden sm:inline">{priceChange.percentage}%</span>
+                              </div>
                             )}
-                            <span className="hidden sm:inline">{priceChange.percentage}%</span>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </CardContent>
                   </Link>

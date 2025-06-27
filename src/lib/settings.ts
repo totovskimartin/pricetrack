@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 // Cache for settings to avoid repeated database calls
-let settingsCache: Map<string, string> = new Map()
+const settingsCache: Map<string, string> = new Map()
 let cacheTimestamp = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 

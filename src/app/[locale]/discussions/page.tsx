@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible } from '@/components/ui/collapsible'
+import { UserAvatar } from '@/components/ui/user-link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/providers/auth-provider'
 import {
@@ -36,6 +37,8 @@ interface Discussion {
   created_by_user?: {
     full_name?: string
     email: string
+    username?: string
+    avatar_url?: string
   }
   comment_count?: number
   like_count?: number
@@ -73,7 +76,7 @@ export default function DiscussionsPage() {
         .from('discussions')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .eq('is_approved', true) // Only show approved discussions
 
@@ -306,12 +309,12 @@ export default function DiscussionsPage() {
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-1">
-                          <User className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate max-w-[120px] sm:max-w-none">
-                            {discussion.created_by_user?.full_name ||
-                             discussion.created_by_user?.email ||
-                             'Анонимен'}
-                          </span>
+                          <UserAvatar
+                            user={discussion.created_by_user}
+                            size="sm"
+                            showName={true}
+                            className="text-muted-foreground"
+                          />
                         </div>
                         <div className="flex items-center space-x-1">
                           <MessageCircle className="h-4 w-4 flex-shrink-0" />

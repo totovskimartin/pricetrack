@@ -9,7 +9,7 @@ export interface QueuedEmail {
   subject: string
   html_content: string
   text_content?: string
-  email_type: 'price_alert' | 'admin_notification' | 'welcome' | 'system'
+  email_type: 'price_alert' | 'admin_notification' | 'welcome' | 'system' | 'contact'
   priority: 'high' | 'normal' | 'low'
   scheduled_for?: string
   attempts: number
@@ -137,6 +137,31 @@ class EmailQueue {
   }
 
   /**
+   * Queue contact message email
+   */
+  async queueContactMessage(
+    adminEmail: string,
+    replyToEmail: string,
+    subject: string,
+    htmlContent: string,
+    textContent?: string
+  ): Promise<boolean> {
+    return this.queueEmail({
+      to_email: adminEmail,
+      subject: `Контактна форма: ${subject}`,
+      html_content: htmlContent,
+      text_content: textContent,
+      email_type: 'contact',
+      priority: 'high', // Contact messages should be high priority
+      max_attempts: 3,
+      metadata: {
+        reply_to: replyToEmail,
+        original_subject: subject
+      }
+    })
+  }
+
+  /**
    * Process pending emails
    */
   async processQueue(): Promise<void> {
@@ -201,12 +226,19 @@ class EmailQueue {
         .eq('id', queuedEmail.id)
 
       // Send email
-      const result = await emailService.sendEmail({
+      const emailOptions: EmailOptions = {
         to: queuedEmail.to_email,
         subject: queuedEmail.subject,
         html: queuedEmail.html_content,
         text: queuedEmail.text_content
-      })
+      }
+
+      // Add reply-to for contact messages
+      if (queuedEmail.email_type === 'contact' && queuedEmail.metadata?.reply_to) {
+        emailOptions.replyTo = queuedEmail.metadata.reply_to
+      }
+
+      const result = await emailService.sendEmail(emailOptions)
 
       if (result.success) {
         // Mark as sent

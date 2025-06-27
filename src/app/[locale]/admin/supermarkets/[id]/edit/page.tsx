@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import AdminLayout from '@/components/admin/admin-layout'
@@ -15,7 +15,7 @@ import { logAdminAction } from '@/lib/admin'
 import { useAuth } from '@/components/providers/auth-provider'
 import { generateSlug } from '@/lib/slug-utils'
 import { useConfirmation } from '@/hooks/use-confirmation'
-import { ArrowLeft, Save, Loader2, Upload, X, Store } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, X, Store } from 'lucide-react'
 
 interface SupermarketForm {
   name: string
@@ -45,13 +45,7 @@ export default function EditSupermarketPage() {
 
   const supermarketId = params.id as string
 
-  useEffect(() => {
-    if (supermarketId) {
-      fetchSupermarket()
-    }
-  }, [supermarketId])
-
-  const fetchSupermarket = async () => {
+  const fetchSupermarket = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('supermarkets')
@@ -81,7 +75,13 @@ export default function EditSupermarketPage() {
     } finally {
       setFetchLoading(false)
     }
-  }
+  }, [supermarketId, showError, router])
+
+  useEffect(() => {
+    if (supermarketId) {
+      fetchSupermarket()
+    }
+  }, [supermarketId, fetchSupermarket])
 
   const uploadImage = async (file: File): Promise<string | null> => {
     try {

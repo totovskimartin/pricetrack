@@ -180,7 +180,7 @@ export async function getCachedDiscussions(filters?: {
         .from('discussions')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email, username)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
 

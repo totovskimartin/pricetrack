@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { UserAvatar } from '@/components/ui/user-link'
 import {
   MessageSquare,
   Search,
@@ -182,8 +183,12 @@ export function MobileDiscussionsModeration({
                       </h3>
 
                       <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>{discussion.created_by_user?.full_name || discussion.created_by_user?.email || 'Анонимен'}</span>
+                        <UserAvatar
+                          user={discussion.created_by_user}
+                          size="sm"
+                          showName={true}
+                          className="text-xs text-muted-foreground"
+                        />
                         <Calendar className="h-3 w-3 ml-2" />
                         <span>{formatDate(discussion.created_at)}</span>
                       </div>

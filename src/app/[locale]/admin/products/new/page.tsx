@@ -58,7 +58,11 @@ export default function NewProduct() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imagePreview, setImagePreview] = useState<string>('')
-  const [supermarkets, setSupermarkets] = useState<any[]>([])
+  const [supermarkets, setSupermarkets] = useState<Array<{
+    id: string
+    name: string
+    logo_url?: string
+  }>>([])
 
   // Fetch supermarkets on component mount
   useEffect(() => {

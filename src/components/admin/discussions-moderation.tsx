@@ -12,6 +12,7 @@ import { useAuth } from '@/components/providers/auth-provider'
 import { invalidateDiscussionCache } from '@/lib/cache'
 import { useConfirmation } from '@/hooks/use-confirmation'
 import { useToast } from '@/components/providers/toast-provider'
+import { UserAvatar } from '@/components/ui/user-link'
 import { MobileDiscussionsModeration } from './mobile-discussions-moderation'
 import {
   Search,
@@ -47,6 +48,7 @@ interface Discussion {
     full_name?: string
     email: string
     username?: string
+    avatar_url?: string
   }
   product?: {
     id: string
@@ -67,6 +69,7 @@ interface Comment {
     full_name?: string
     email: string
     username?: string
+    avatar_url?: string
   }
   discussion_id: string
 }
@@ -107,7 +110,7 @@ export default function DiscussionsModeration() {
         .from('discussions')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email, username)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .order('created_at', { ascending: false })
 
@@ -177,7 +180,7 @@ export default function DiscussionsModeration() {
         .from('discussion_comments')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email, username)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .eq('discussion_id', discussionId)
         .order('created_at', { ascending: false })
@@ -670,12 +673,20 @@ export default function DiscussionsModeration() {
 
                         {/* Author */}
                         <TableCell>
-                          <div className="text-sm">
-                            <div className="font-medium">
-                              {discussion.created_by_user?.username ? `@${discussion.created_by_user.username}` : discussion.created_by_user?.full_name || 'Неизвестен'}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {discussion.created_by_user?.email || 'Няма имейл'}
+                          <div className="flex items-center space-x-2">
+                            <UserAvatar
+                              user={discussion.created_by_user}
+                              size="sm"
+                              showName={false}
+                              className="flex-shrink-0"
+                            />
+                            <div className="text-sm min-w-0">
+                              <div className="font-medium truncate">
+                                {discussion.created_by_user?.username ? `@${discussion.created_by_user.username}` : discussion.created_by_user?.full_name || 'Неизвестен'}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                {discussion.created_by_user?.email || 'Няма имейл'}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
@@ -828,12 +839,20 @@ export default function DiscussionsModeration() {
 
                       {/* Author */}
                       <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">
-                            {comment.created_by_user?.username ? `@${comment.created_by_user.username}` : comment.created_by_user?.full_name || 'Неизвестен'}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {comment.created_by_user?.email || 'Няма имейл'}
+                        <div className="flex items-center space-x-2">
+                          <UserAvatar
+                            user={comment.created_by_user}
+                            size="sm"
+                            showName={false}
+                            className="flex-shrink-0"
+                          />
+                          <div className="text-sm min-w-0">
+                            <div className="font-medium truncate">
+                              {comment.created_by_user?.username ? `@${comment.created_by_user.username}` : comment.created_by_user?.full_name || 'Неизвестен'}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {comment.created_by_user?.email || 'Няма имейл'}
+                            </div>
                           </div>
                         </div>
                       </TableCell>

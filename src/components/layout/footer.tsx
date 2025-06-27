@@ -121,8 +121,13 @@ export function Footer() {
               <div className="text-gray-400 text-sm">
                 © {currentYear} PriceTrack България. Всички права запазени.
               </div>
-              <div className="text-gray-500 text-xs">
-                v0.3-beta
+              <div className="flex items-center space-x-3">
+                <div className="text-gray-500 text-xs">
+                  v0.4-beta
+                </div>
+                <div className="text-white text-xs">
+                  Направено с ❤️ в България
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-6 text-sm">

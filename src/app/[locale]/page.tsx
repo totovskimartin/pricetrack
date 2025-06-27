@@ -393,7 +393,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-xs text-white bg-white/10 px-3 py-1 rounded-full">
-                v0.3-beta
+                v0.4-beta
               </span>
               <span className="text-xs text-white">
                 Направено с ❤️ в България

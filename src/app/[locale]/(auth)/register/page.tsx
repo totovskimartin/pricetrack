@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null)
   const router = useRouter()
   const supabase = createSupabaseClient()
-  const { showSuccess, showError } = useToast()
+  const { showError } = useToast()
 
   // Check username availability
   const checkUsernameAvailability = async (usernameToCheck: string) => {
@@ -294,7 +294,7 @@ export default function RegisterPage() {
       if (error) {
         showError(error.message, 'Грешка при Google регистрация')
       }
-    } catch (err) {
+    } catch {
       showError('Възникна неочаквана грешка при Google регистрацията', 'Системна грешка')
     } finally {
       setLoading(false)

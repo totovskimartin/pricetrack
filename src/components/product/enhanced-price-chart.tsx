@@ -92,7 +92,7 @@ export function EnhancedPriceChart({ product }: EnhancedPriceChartProps) {
     }
 
     // Filter prices by date and supermarket
-    let filteredPrices = prices.filter(price => {
+    const filteredPrices = prices.filter(price => {
       const priceDate = new Date(price.recorded_at)
       const matchesDate = priceDate >= startDate
       const matchesSupermarket = selectedSupermarket === 'all' || price.supermarket.id === selectedSupermarket

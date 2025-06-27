@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { UserAvatar } from '@/components/ui/user-link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/providers/auth-provider'
 import { commentsRequireApproval } from '@/lib/settings'
@@ -38,6 +39,8 @@ interface Discussion {
   created_by_user?: {
     full_name?: string
     email: string
+    username?: string
+    avatar_url?: string
   }
   views?: number
   like_count?: number
@@ -52,6 +55,8 @@ interface Comment {
   created_by_user?: {
     full_name?: string
     email: string
+    username?: string
+    avatar_url?: string
   }
   is_approved: boolean
   parent_id?: string
@@ -98,9 +103,12 @@ function CommentThread({
       {/* Comment Header */}
       <div className="flex items-start justify-between mb-3 gap-2">
         <div className="flex items-center space-x-2 min-w-0 flex-1">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="h-4 w-4 text-blue-600" />
-          </div>
+          <UserAvatar
+            user={comment.created_by_user}
+            size="md"
+            showName={false}
+            className="flex-shrink-0"
+          />
           <div className="min-w-0 flex-1">
             <div className="font-medium text-gray-900 text-sm truncate">
               {comment.created_by_user?.full_name ||
@@ -285,7 +293,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
         .from('discussions')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .eq('id', discussionId)
         .eq('is_approved', true)
@@ -333,7 +341,7 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
         .from('discussion_comments')
         .select(`
           *,
-          created_by_user:users!created_by(full_name, email)
+          created_by_user:users!created_by(full_name, email, username, avatar_url)
         `)
         .eq('discussion_id', discussionId)
         .eq('is_approved', true)
@@ -679,12 +687,12 @@ export default function DiscussionPage({ params }: { params: Promise<{ id: strin
             {/* Stats */}
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 text-sm text-gray-500">
               <div className="flex items-center space-x-1">
-                <User className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">
-                  {discussion.created_by_user?.full_name ||
-                   discussion.created_by_user?.email ||
-                   'Анонимен'}
-                </span>
+                <UserAvatar
+                  user={discussion.created_by_user}
+                  size="sm"
+                  showName={true}
+                  className="text-sm text-gray-500"
+                />
               </div>
               <div className="flex items-center space-x-1">
                 <MessageSquare className="h-4 w-4 flex-shrink-0" />

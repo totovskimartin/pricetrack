@@ -127,6 +127,7 @@ export default function PriceUpdatesPage() {
         .select(`
           price_bgn,
           supermarket_id,
+          created_at,
           supermarkets (name)
         `)
         .eq('product_id', selectedProduct.id)
@@ -158,7 +159,19 @@ export default function PriceUpdatesPage() {
       }
 
       // Check for price changes and send notifications
-      await checkAndSendNotifications(selectedProduct, newPrices, currentPrices || [])
+      const transformedNewPrices = newPrices.map(price => ({
+        supermarket_id: price.supermarket_id,
+        price: price.price_bgn,
+        date: price.created_at
+      }))
+
+      const transformedCurrentPrices = (currentPrices || []).map(price => ({
+        supermarket_id: price.supermarket_id,
+        price: price.price_bgn,
+        date: price.created_at
+      }))
+
+      await checkAndSendNotifications(selectedProduct, transformedNewPrices, transformedCurrentPrices)
 
       setSuccessMessage(`Успешно добавени ${newPrices.length} нови цени за ${selectedProduct.name}`)
       setPriceUpdates([])
@@ -173,9 +186,17 @@ export default function PriceUpdatesPage() {
   }
 
   const checkAndSendNotifications = async (
-    product: Product, 
-    newPrices: any[], 
-    currentPrices: any[]
+    product: Product,
+    newPrices: Array<{
+      supermarket_id: string
+      price: number
+      date: string
+    }>,
+    currentPrices: Array<{
+      supermarket_id: string
+      price: number
+      date: string
+    }>
   ) => {
     try {
       // Get users tracking this product with their emails
@@ -201,8 +222,8 @@ export default function PriceUpdatesPage() {
           const userEmail = tracking.users?.[0]?.email
           if (!userEmail) continue
 
-          const oldPrice = currentPrice?.price_bgn || newPrice.price_bgn
-          const priceDrop = oldPrice - newPrice.price_bgn
+          const oldPrice = currentPrice?.price || newPrice.price
+          const priceDrop = oldPrice - newPrice.price
           const percentageChange = (priceDrop / oldPrice) * 100
 
           // Send notification via API
@@ -210,7 +231,7 @@ export default function PriceUpdatesPage() {
           let notificationType = ''
 
           // Check if target price is reached
-          if (tracking.target_price_bgn && newPrice.price_bgn <= tracking.target_price_bgn) {
+          if (tracking.target_price_bgn && newPrice.price <= tracking.target_price_bgn) {
             shouldNotify = true
             notificationType = 'target_reached'
           }
@@ -237,8 +258,8 @@ export default function PriceUpdatesPage() {
                     productBrand: product.brand,
                     productImage: product.image_url,
                     oldPrice: oldPrice,
-                    newPrice: newPrice.price_bgn,
-                    currentPrice: newPrice.price_bgn,
+                    newPrice: newPrice.price,
+                    currentPrice: newPrice.price,
                     targetPrice: tracking.target_price_bgn,
                     supermarketName: supermarket?.name || 'Неизвестен'
                   }

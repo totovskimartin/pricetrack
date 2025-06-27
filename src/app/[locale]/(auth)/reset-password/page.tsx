@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false)
   const [validSession, setValidSession] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
+
   const supabase = createSupabaseClient()
 
   useEffect(() => {
@@ -92,7 +92,7 @@ function ResetPasswordForm() {
       setTimeout(() => {
         router.push('/bg/login')
       }, 3000)
-    } catch (err) {
+    } catch {
       setError('Възникна неочаквана грешка')
     } finally {
       setLoading(false)

@@ -543,6 +543,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      product_comments: {
+        Row: {
+          id: string
+          product_id: string
+          user_id: string
+          content: string
+          likes: number
+          dislikes: number
+          parent_comment_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          user_id: string
+          content: string
+          likes?: number
+          dislikes?: number
+          parent_comment_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          user_id?: string
+          content?: string
+          likes?: number
+          dislikes?: number
+          parent_comment_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

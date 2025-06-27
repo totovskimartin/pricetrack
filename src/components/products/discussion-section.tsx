@@ -440,8 +440,7 @@ export function DiscussionSection({ productId }: DiscussionSectionProps) {
                     </CardDescription>
                     <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 mr-1" />
-                        <UserLink user={discussion.user} className="text-sm" />
+                        <UserLink user={discussion.user} className="text-sm" showAvatar={true} avatarSize="sm" />
                       </div>
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
@@ -492,8 +491,7 @@ export function DiscussionSection({ productId }: DiscussionSectionProps) {
                             <p className="text-gray-900">{comment.content}</p>
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                               <div className="flex items-center">
-                                <User className="h-3 w-3 mr-1" />
-                                <UserLink user={comment.user} className="text-sm" />
+                                <UserLink user={comment.user} className="text-sm" showAvatar={true} avatarSize="sm" />
                               </div>
                               <div className="flex items-center">
                                 <Calendar className="h-3 w-3 mr-1" />

@@ -106,15 +106,15 @@ export default function ProductDetailPage() {
   // Get product ID
   const productId = params.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null
 
-  // Fetch comment count on page load
+  // Fetch comment count after product is loaded
   useEffect(() => {
-    if (productId) {
+    if (product?.id) {
       fetchCommentCount()
     }
-  }, [productId])
+  }, [product?.id])
 
   const fetchCommentCount = async () => {
-    if (!productId) return
+    if (!product?.id) return
 
     try {
       const { getProductCommentCount, checkCommentsTableExists } = await import('@/lib/comments')
@@ -128,8 +128,8 @@ export default function ProductDetailPage() {
         return
       }
 
-      // Get comment count
-      const count = await getProductCommentCount(productId)
+      // Get comment count using the actual product UUID, not the URL slug
+      const count = await getProductCommentCount(product.id)
       setCommentCount(count)
     } catch (error) {
       console.error('Error fetching comment count:', error)

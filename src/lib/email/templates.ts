@@ -32,6 +32,14 @@ export interface WelcomeEmailData {
   supportEmail: string
 }
 
+export interface ContactMessageData {
+  senderName: string
+  senderEmail: string
+  subject: string
+  message: string
+  timestamp: string
+}
+
 // Base email template wrapper
 const getBaseTemplate = (content: string, title: string) => `
 <!DOCTYPE html>
@@ -421,6 +429,63 @@ ${data.actionUrl ? `Прегледайте: ${data.actionUrl}` : ''}
 
   return {
     html: getBaseTemplate(content, 'Административно известие'),
+    text
+  }
+}
+
+// Contact message template
+export function getContactMessageTemplate(data: ContactMessageData) {
+  const content = `
+    <div class="header">
+      <h1>Ново съобщение от контактната форма</h1>
+    </div>
+
+    <div class="content">
+      <div class="info-section">
+        <h2>Информация за подателя</h2>
+        <p><strong>Име:</strong> ${data.senderName}</p>
+        <p><strong>Имейл:</strong> ${data.senderEmail}</p>
+        <p><strong>Време:</strong> ${data.timestamp}</p>
+      </div>
+
+      <div class="message-section">
+        <h2>Тема: ${data.subject}</h2>
+        <div class="message-content">
+          ${data.message.replace(/\n/g, '<br>')}
+        </div>
+      </div>
+
+      <div class="action-section">
+        <p><strong>За отговор:</strong> Отговорете директно на този имейл или използвайте адреса: ${data.senderEmail}</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Това съобщение е изпратено автоматично от контактната форма на PriceTrack България.</p>
+    </div>
+  `
+
+  const text = `
+Ново съобщение от контактната форма
+
+Информация за подателя:
+Име: ${data.senderName}
+Имейл: ${data.senderEmail}
+Време: ${data.timestamp}
+
+Тема: ${data.subject}
+
+Съобщение:
+${data.message}
+
+За отговор: ${data.senderEmail}
+
+---
+Това съобщение е изпратено автоматично от контактната форма на PriceTrack България.
+  `
+
+  return {
+    html: getBaseTemplate(content, `Контактна форма: ${data.subject}`),
     text
   }
 }

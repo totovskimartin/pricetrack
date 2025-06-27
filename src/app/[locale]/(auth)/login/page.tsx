@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseClient } from '@/lib/supabase'
-import { getEmailForLogin, isUserActive, debugUserStatus } from '@/lib/user-utils'
+import { getEmailForLogin, isUserActive } from '@/lib/user-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -73,7 +73,7 @@ function LoginForm() {
         console.error('No user in auth response despite no error')
         setError('Възникна неочаквана грешка при влизане')
       }
-    } catch (err) {
+    } catch {
       setError('Възникна неочаквана грешка')
     } finally {
       setLoading(false)
@@ -98,7 +98,7 @@ function LoginForm() {
       if (error) {
         setError(error.message)
       }
-    } catch (err) {
+    } catch {
       setError('Възникна неочаквана грешка')
     } finally {
       setLoading(false)

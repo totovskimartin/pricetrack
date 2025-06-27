@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/auth-provider'
@@ -22,15 +22,7 @@ export default function PriceSuggestionsPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    if (authUser) {
-      fetchUserProfile()
-    } else if (!authLoading) {
-      router.push('/bg/login')
-    }
-  }, [authUser, authLoading, router])
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     if (!authUser) return
 
     try {
@@ -58,7 +50,15 @@ export default function PriceSuggestionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [authUser, router])
+
+  useEffect(() => {
+    if (authUser) {
+      fetchUserProfile()
+    } else if (!authLoading) {
+      router.push('/bg/login')
+    }
+  }, [authUser, authLoading, router, fetchUserProfile])
 
   if (loading || authLoading) {
     return (

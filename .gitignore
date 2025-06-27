@@ -100,3 +100,6 @@ temp/
 
 # Supabase
 .supabase
+
+# Development/test scripts (optional - uncomment if you want to exclude test scripts)
+scripts/test-*.js

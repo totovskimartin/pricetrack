@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { CheckCircle, Mail, Settings, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { AuthGuard } from '@/components/auth/auth-guard'
+import { supabase } from '@/lib/supabase'
 
 interface EmailPreferences {
   price_alerts_enabled: boolean
@@ -26,10 +27,17 @@ function EmailPreferencesContent() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userProfile, setUserProfile] = useState<{ username: string } | null>(null)
 
   useEffect(() => {
-    fetchPreferences()
-  }, [])
+    if (user) {
+      fetchPreferences()
+      fetchUserProfile()
+    } else {
+      setLoading(false)
+      setError('Не сте влезли в системата')
+    }
+  }, [user])
 
   useEffect(() => {
     if (success) {
@@ -38,9 +46,42 @@ function EmailPreferencesContent() {
     }
   }, [success])
 
+  const fetchUserProfile = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+
+      if (!error && data) {
+        setUserProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
+
   const fetchPreferences = async () => {
     try {
-      const response = await fetch('/api/email-preferences')
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setError('Не сте влезли в системата')
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/email-preferences', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -63,10 +104,21 @@ function EmailPreferencesContent() {
     setError(null)
 
     try {
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setError('Не сте влезли в системата')
+        setSaving(false)
+        return
+      }
+
       const response = await fetch('/api/email-preferences', {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(updates)
       })
@@ -124,12 +176,21 @@ function EmailPreferencesContent() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <Link href="/bg/profile">
-              <Button variant="outline" size="sm" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Обратно към профила
-              </Button>
-            </Link>
+            {userProfile ? (
+              <Link href={`/bg/profile/${userProfile.username}`}>
+                <Button variant="outline" size="sm" className="mb-4">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Обратно към профила
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/bg/settings">
+                <Button variant="outline" size="sm" className="mb-4">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Обратно към настройките
+                </Button>
+              </Link>
+            )}
             <div className="flex items-center space-x-3 mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Mail className="h-5 w-5 text-blue-600" />

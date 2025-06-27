@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Cookie, Settings, Shield, BarChart3, Target } from 'lucide-react'
 
 export default function CookiesPage() {
@@ -36,7 +36,7 @@ export default function CookiesPage() {
             <CardContent>
               <p className="text-gray-700 leading-relaxed">
                 Бисквитките са малки текстови файлове, които се съхраняват на вашето устройство (компютър, таблет или мобилен телефон) 
-                когато посещавате уебсайт. Те помагат на уебсайта да "запомни" информация за вашето посещение, 
+                когато посещавате уебсайт. Те помагат на уебсайта да &quot;запомни&quot; информация за вашето посещение,
                 като предпочитания за език, настройки за влизане и други данни, които правят следващите ви посещения по-лесни 
                 и сайта по-полезен за вас.
               </p>

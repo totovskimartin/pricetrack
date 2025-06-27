@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -41,10 +41,7 @@ import AlertsManagement from '@/components/admin/alerts-management'
 import NewsManagement from '@/components/admin/news-management'
 import EmailSystemManagement from '@/components/admin/email-system-management'
 import { MobileAdminLayout } from '@/components/admin/mobile-admin-layout'
-import { MobileAdminDashboard } from '@/components/admin/mobile-admin-dashboard'
-import { MobileUsersManagement } from '@/components/admin/mobile-users-management'
-import { MobileProductsManagement } from '@/components/admin/mobile-products-management'
-import { MobileDiscussionsModeration } from '@/components/admin/mobile-discussions-moderation'
+
 import { useConfirmation } from '@/hooks/use-confirmation'
 import { useAdminNotifications } from '@/hooks/use-admin-notifications'
 
@@ -56,7 +53,18 @@ interface AdminStats {
   totalAlerts: number
   pendingApprovals: number
   activeUsers: number
-  recentActivity: any[]
+  recentActivity: Array<{
+    id: string
+    type: string
+    title: string
+    created_at: string
+    action?: string
+    target_type?: string
+    admin?: {
+      full_name?: string
+      email?: string
+    }
+  }>
 }
 
 interface PendingItem {
@@ -66,7 +74,6 @@ interface PendingItem {
   created_at: string
   created_by_user?: {
     full_name: string
-    email: string
   }
 }
 
@@ -75,7 +82,12 @@ function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { confirm, showSuccess, showError, ConfirmationComponent } = useConfirmation()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{
+    id: string
+    email: string
+    full_name: string
+    role: string
+  } | null>(null)
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,13 +120,42 @@ function AdminDashboard() {
     }
   }, [searchParams])
 
+  const fetchUserProfile = useCallback(async () => {
+    if (!authUser) return
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')  // Make sure we're selecting all fields
+        .eq('id', authUser.id)
+        .single()
+
+      if (error) {
+        console.error('Error fetching user profile:', error)
+        router.push('/bg/login')
+        return
+      }
+
+      // Check if the user has admin access before setting the user state
+      if (!canAccessAdminPanel(data)) {
+        router.push('/bg/dashboard')
+        return
+      }
+
+      setUser(data)
+    } catch (error) {
+      console.error('Error:', error)
+      router.push('/bg/login')
+    }
+  }, [authUser, router])
+
   useEffect(() => {
     if (authUser) {
       fetchUserProfile()
     } else {
       setLoading(false)
     }
-  }, [authUser])
+  }, [authUser, fetchUserProfile])
 
   useEffect(() => {
     if (user) {
@@ -180,34 +221,7 @@ function AdminDashboard() {
     router.replace(`/bg/admin${newUrl}`, { scroll: false })
   }
 
-  const fetchUserProfile = async () => {
-    if (!authUser) return
 
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')  // Make sure we're selecting all fields
-        .eq('id', authUser.id)
-        .single()
-
-      if (error) {
-        console.error('Error fetching user profile:', error)
-        router.push('/bg/login')
-        return
-      }
-
-      // Check if the user has admin access before setting the user state
-      if (!canAccessAdminPanel(data)) {
-        router.push('/bg/dashboard')
-        return
-      }
-
-      setUser(data)
-    } catch (error) {
-      console.error('Error:', error)
-      router.push('/bg/login')
-    }
-  }
 
   const fetchDashboardData = async () => {
     try {
@@ -239,21 +253,36 @@ function AdminDashboard() {
       
       // Transform pending data into unified format
       const allPending: PendingItem[] = [
-        ...(pendingData.pendingProducts || []).map((item: any) => ({
+        ...(pendingData.pendingProducts || []).map((item: {
+          id: string
+          name: string
+          created_at: string
+          created_by_user?: { full_name: string }
+        }) => ({
           id: item.id,
           type: 'product' as const,
           title: item.name,
           created_at: item.created_at,
           created_by_user: item.created_by_user
         })),
-        ...(pendingData.pendingDiscussions || []).map((item: any) => ({
+        ...(pendingData.pendingDiscussions || []).map((item: {
+          id: string
+          title: string
+          created_at: string
+          created_by_user?: { full_name: string }
+        }) => ({
           id: item.id,
           type: 'discussion' as const,
           title: item.title,
           created_at: item.created_at,
           created_by_user: item.created_by_user
         })),
-        ...(pendingData.pendingComments || []).map((item: any) => ({
+        ...(pendingData.pendingComments || []).map((item: {
+          id: string
+          created_at: string
+          created_by_user?: { full_name: string }
+          discussion?: { title: string }
+        }) => ({
           id: item.id,
           type: 'comment' as const,
           title: `Коментар в ${item.discussion?.title || 'дискусия'}`,
@@ -879,7 +908,7 @@ function AdminDashboard() {
                           <p className="font-medium text-sm hover:text-blue-600 transition-colors truncate">{item.title}</p>
                           {item.created_by_user && (
                             <p className="text-xs text-gray-500 truncate">
-                              от {item.created_by_user.full_name || item.created_by_user.email}
+                              от {item.created_by_user.full_name}
                             </p>
                           )}
                         </Link>
@@ -931,16 +960,16 @@ function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {stats.recentActivity.slice(0, 5).map((activity: any) => (
+                    {stats.recentActivity.slice(0, 5).map((activity) => (
                       <div key={activity.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                         <div>
-                          <p className="font-medium text-sm">{activity.action}</p>
+                          <p className="font-medium text-sm">{activity.action || activity.title}</p>
                           <p className="text-xs text-gray-500">
                             {activity.admin?.full_name || activity.admin?.email} • {formatDate(activity.created_at)}
                           </p>
                         </div>
                         <Badge variant="outline">
-                          {activity.target_type}
+                          {activity.target_type || activity.type}
                         </Badge>
                       </div>
                     ))}
