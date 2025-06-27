@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { canAccessAdminPanel, getPendingApprovalsCount } from '@/lib/admin'
 import { useUnreadNotificationCount } from '@/hooks/use-notifications'
 import { MobileHeader } from './mobile-header'
+import { PriceTrackLogoMedium } from '@/components/ui/pricetrack-logo'
 import {
   Home,
   ShoppingCart,
@@ -191,9 +192,7 @@ export function SidebarNavigation() {
                 className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setIsOpen(false)}
               >
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5 text-white" />
-                </div>
+                <PriceTrackLogoMedium />
                 <div>
                   <h1 className="text-xl font-bold text-foreground">PriceTrack</h1>
                   <p className="text-xs text-muted-foreground">България</p>

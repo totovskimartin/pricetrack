@@ -51,6 +51,16 @@ function DashboardContent() {
   const [searchResults, setSearchResults] = useState<ProductWithLatestPrice[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [userProfile, setUserProfile] = useState<{
+    id: string
+    email: string
+    username: string
+    full_name: string | null
+    first_name: string | null
+    last_name: string | null
+    avatar_url: string | null
+    role: string
+  } | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -223,10 +233,30 @@ function DashboardContent() {
     }
   }
 
+  const fetchUserProfile = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, username, full_name, first_name, last_name, avatar_url, role')
+        .eq('id', user.id)
+        .single()
+
+      if (!error && data) {
+        setUserProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
+
   useEffect(() => {
+    console.log('🚀 Dashboard useEffect triggered, user:', user?.email || 'not logged in')
     fetchNews()
+    fetchActivityFeed() // Always fetch activity feed, regardless of user login status
     if (user) {
-      fetchActivityFeed()
+      fetchUserProfile()
     }
   }, [user])
 
@@ -234,36 +264,7 @@ function DashboardContent() {
   const fetchActivityFeed = async () => {
     try {
       setActivityLoading(true)
-
-      // Get recent price alerts for the user
-      const { data: alertsData, error: alertsError } = await supabase
-        .from('price_alerts')
-        .select(`
-          id,
-          alert_type,
-          old_price,
-          new_price,
-          percentage_change,
-          created_at,
-          products (
-            id,
-            name,
-            brand,
-            image_url
-          ),
-          supermarkets (
-            name
-          )
-        `)
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(10)
-
-      if (alertsError) {
-        console.error('Error fetching price alerts:', alertsError)
-        setActivityFeed([])
-        return
-      }
+      console.log('🔍 Fetching activity feed...')
 
       // Get recent price changes (last 7 days) for all products
       const { data: recentPricesData, error: pricesError } = await supabase
@@ -273,6 +274,7 @@ function DashboardContent() {
           price_bgn,
           created_at,
           supermarket_id,
+          product_id,
           products (
             id,
             name,
@@ -285,19 +287,132 @@ function DashboardContent() {
         `)
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(50)
 
       if (pricesError) {
-        console.error('Error fetching recent prices:', pricesError)
+        console.error('❌ Error fetching recent prices:', pricesError)
+        setActivityFeed([])
+        return
       }
 
-      // Combine and format activity data
-      const activities = []
+      console.log(`📊 Found ${recentPricesData?.length || 0} recent price entries`)
 
-      // Add price alerts
-      if (alertsData) {
+      if (!recentPricesData || recentPricesData.length === 0) {
+        console.log('⚠️ No recent price data found')
+        setActivityFeed([])
+        return
+      }
+
+      // Get recent price alerts for the user (if logged in)
+      let alertsData = []
+      if (user?.id) {
+        const { data: userAlertsData, error: alertsError } = await supabase
+          .from('price_alerts')
+          .select(`
+            id,
+            alert_type,
+            old_price,
+            new_price,
+            percentage_change,
+            created_at,
+            products (
+              id,
+              name,
+              brand,
+              image_url
+            ),
+            supermarkets (
+              name
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (!alertsError && userAlertsData) {
+          alertsData = userAlertsData
+          console.log(`🔔 Found ${alertsData.length} user alerts`)
+        }
+      }
+
+      // Process recent price changes to find actual changes
+      const activities = []
+      const processedProducts = new Set()
+
+      if (recentPricesData) {
+        for (const price of recentPricesData) {
+          const productId = (price.products as any)?.id
+          const supermarketId = price.supermarket_id
+          const productKey = `${productId}-${supermarketId}`
+
+          // Skip if we already processed this product-supermarket combination
+          if (processedProducts.has(productKey)) {
+            continue
+          }
+          processedProducts.add(productKey)
+
+          // Get previous price for this specific product and supermarket
+          const { data: previousPricesData } = await supabase
+            .from('prices')
+            .select('id, price_bgn, created_at')
+            .eq('product_id', productId)
+            .eq('supermarket_id', supermarketId)
+            .neq('id', price.id)
+            .lt('created_at', price.created_at)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          let percentageChange = null
+          let oldPrice = null
+          let changeType = 'new'
+
+          if (previousPricesData && previousPricesData.length > 0) {
+            const previousPrice = previousPricesData[0]
+            oldPrice = previousPrice.price_bgn
+
+            if (price.price_bgn !== previousPrice.price_bgn) {
+              percentageChange = ((price.price_bgn - previousPrice.price_bgn) / previousPrice.price_bgn) * 100
+              changeType = price.price_bgn > previousPrice.price_bgn ? 'increase' : 'decrease'
+
+              console.log(`💰 Price change for ${(price.products as any)?.name}: ${previousPrice.price_bgn} → ${price.price_bgn} (${percentageChange.toFixed(1)}%)`)
+
+              activities.push({
+                id: `price-${price.id}`,
+                type: 'price_update',
+                product_name: (price.products as any)?.name || 'Неизвестен продукт',
+                supermarket_name: (price.supermarkets as any)?.name || 'Неизвестен супермаркет',
+                new_price: price.price_bgn,
+                old_price: oldPrice,
+                percentage_change: percentageChange,
+                change_type: changeType,
+                created_at: price.created_at,
+                product: price.products
+              })
+            }
+          } else {
+            // New price entry (no previous price)
+            console.log(`🆕 New price entry for ${(price.products as any)?.name}: ${price.price_bgn} лв.`)
+
+            activities.push({
+              id: `price-${price.id}`,
+              type: 'price_update',
+              product_name: (price.products as any)?.name || 'Неизвестен продукт',
+              supermarket_name: (price.supermarkets as any)?.name || 'Неизвестен супермаркет',
+              new_price: price.price_bgn,
+              old_price: null,
+              percentage_change: 0,
+              change_type: 'new',
+              created_at: price.created_at,
+              product: price.products
+            })
+          }
+        }
+      }
+
+      // Add user-specific price alerts at the top
+      if (alertsData && alertsData.length > 0) {
         alertsData.forEach(alert => {
-          activities.push({
+          activities.unshift({
             id: `alert-${alert.id}`,
             type: 'price_alert',
             title: getAlertTitle(alert.alert_type),
@@ -308,65 +423,21 @@ function DashboardContent() {
             newPrice: alert.new_price,
             percentageChange: alert.percentage_change,
             timestamp: alert.created_at,
+            created_at: alert.created_at,
             icon: getAlertIcon(alert.alert_type)
           })
         })
       }
 
-      // Add recent price changes (for products not in alerts)
-      if (recentPricesData) {
-        for (const price of recentPricesData) {
-          // Only add if not already covered by alerts
-          const hasAlert = alertsData?.some(alert =>
-            (alert.products as any)?.id === (price.products as any)?.id &&
-            Math.abs(new Date(alert.created_at).getTime() - new Date(price.created_at).getTime()) < 60000
-          )
-
-          if (!hasAlert) {
-            // Get previous price for this specific product and supermarket
-            const { data: previousPricesData } = await supabase
-              .from('prices')
-              .select('id, price_bgn, created_at')
-              .eq('product_id', (price.products as any)?.id)
-              .eq('supermarket_id', price.supermarket_id)
-              .neq('id', price.id)
-              .lt('created_at', price.created_at)
-              .order('created_at', { ascending: false })
-              .limit(1)
-
-            let percentageChange = null
-            let oldPrice = null
-
-            if (previousPricesData && previousPricesData.length > 0) {
-              const previousPrice = previousPricesData[0]
-              oldPrice = previousPrice.price_bgn
-              percentageChange = ((price.price_bgn - previousPrice.price_bgn) / previousPrice.price_bgn) * 100
-              console.log(`Price change for ${(price.products as any)?.name}: ${previousPrice.price_bgn} → ${price.price_bgn} (${percentageChange.toFixed(1)}%)`)
-            } else {
-              // If no previous price, show as new price with neutral indicator
-              percentageChange = 0
-              console.log(`New price entry for ${(price.products as any)?.name}: ${price.price_bgn} лв. (no previous price)`)
-            }
-
-            activities.push({
-              id: `price-${price.id}`,
-              type: 'price_update',
-              product_name: (price.products as any)?.name || 'Неизвестен продукт',
-              supermarket_name: (price.supermarkets as any)?.name || 'Неизвестен супермаркет',
-              new_price: price.price_bgn,
-              old_price: oldPrice,
-              created_at: price.created_at
-            })
-          }
-        }
-      }
-
       // Sort by timestamp and limit
-      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      setActivityFeed(activities.slice(0, 15))
+      activities.sort((a, b) => new Date(b.created_at || b.timestamp).getTime() - new Date(a.created_at || a.timestamp).getTime())
+      const finalActivities = activities.slice(0, 15)
+
+      console.log(`✅ Final activity feed: ${finalActivities.length} items`)
+      setActivityFeed(finalActivities)
 
     } catch (error) {
-      console.error('Error fetching activity feed:', error)
+      console.error('❌ Error fetching activity feed:', error)
       setActivityFeed([])
     } finally {
       setActivityLoading(false)
@@ -557,23 +628,22 @@ function DashboardContent() {
 
 
         {/* Activity Feed */}
-        {activityFeed.length > 0 && (
-          <div className="mb-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-blue-600 icon-bounce" />
-                  Последни промени в цените
-                </CardTitle>
-                <CardDescription>
-                  Актуални промени и известия за цени
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {activityLoading ? (
-                  <ActivityFeedSkeleton />
-                ) : (
-                  <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+        <div className="mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-blue-600 icon-bounce" />
+                Последни промени в цените
+              </CardTitle>
+              <CardDescription>
+                Актуални промени и известия за цени
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activityLoading ? (
+                <ActivityFeedSkeleton />
+              ) : activityFeed.length > 0 ? (
+                <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
                     {activityFeed.map((activity) => (
                       <div
                         key={activity.id}
@@ -590,15 +660,19 @@ function DashboardContent() {
                         }}
                       >
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-                          {activity.icon}
+                          {activity.icon || (
+                            activity.type === 'price_alert' ? '🔔' :
+                            activity.change_type === 'decrease' ? '📉' :
+                            activity.change_type === 'increase' ? '📈' : '🆕'
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-sm text-gray-900">
-                              {activity.title}
+                              {activity.title || activity.product_name || 'Промяна в цената'}
                             </h4>
                             <div className="flex items-center space-x-1">
-                              {activity.percentageChange !== null && activity.percentageChange !== undefined && (
+                              {(activity.percentageChange !== null && activity.percentageChange !== undefined && activity.percentageChange !== 0) && (
                                 <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
                                   activity.percentageChange < 0
                                     ? 'bg-green-100 text-green-700'
@@ -613,17 +687,28 @@ function DashboardContent() {
                                   ) : (
                                     <div className="w-3 h-3 mr-1 bg-blue-500 rounded-full" />
                                   )}
-                                  {activity.percentageChange === 0 ? 'Нова' : `${Math.abs(activity.percentageChange).toFixed(1)}%`}
+                                  {`${Math.abs(activity.percentageChange).toFixed(1)}%`}
+                                </div>
+                              )}
+                              {activity.change_type === 'new' && (
+                                <div className="flex items-center text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                  <div className="w-3 h-3 mr-1 bg-blue-500 rounded-full" />
+                                  Нова цена
                                 </div>
                               )}
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-1">
-                            {activity.description}
+                            {activity.description ||
+                             (activity.old_price ?
+                               `${activity.old_price.toFixed(2)} лв. → ${activity.new_price.toFixed(2)} лв.` :
+                               `Нова цена: ${activity.new_price.toFixed(2)} лв.`
+                             )
+                            }
                           </p>
-                          {activity.supermarket && (
+                          {(activity.supermarket || activity.supermarket_name) && (
                             <p className="text-xs text-gray-500 mt-1">
-                              в {activity.supermarket}
+                              в {activity.supermarket || activity.supermarket_name}
                             </p>
                           )}
                           <div className="flex items-center justify-between mt-2">
@@ -635,16 +720,33 @@ function DashboardContent() {
                                 minute: '2-digit'
                               })}
                             </p>
+                            {((activity.oldPrice || activity.old_price) && (activity.newPrice || activity.new_price)) && (
+                              <div className="text-xs text-gray-600">
+                                <span className="line-through text-gray-400">
+                                  {(activity.oldPrice || activity.old_price)?.toFixed(2)} лв.
+                                </span>
+                                <span className="ml-1 font-medium">
+                                  {(activity.newPrice || activity.new_price)?.toFixed(2)} лв.
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Няма скорошни промени</h3>
+                    <p className="text-gray-500 text-sm">
+                      Промените в цените ще се появят тук, когато има нови данни.
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
-        )}
 
         {/* Useful Information Section - Moved to top */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-12 animate-fade-in">
@@ -961,13 +1063,23 @@ function DashboardContent() {
                   <span className="text-sm font-semibold text-gray-900 mb-1">Дискусии</span>
                   <span className="text-xs text-gray-500">Общност</span>
                 </Link>
-                <Link href="/bg/profile" className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
-                  <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <User className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900 mb-1">Профил</span>
-                  <span className="text-xs text-gray-500">Настройки</span>
-                </Link>
+                {userProfile?.username ? (
+                  <Link href={`/bg/profile/${userProfile.username}`} className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 mb-1">Профил</span>
+                    <span className="text-xs text-gray-500">Настройки</span>
+                  </Link>
+                ) : (
+                  <Link href="/bg/settings" className="group flex flex-col items-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:shadow-medium transition-all duration-300 interactive-scale">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 mb-1">Профил</span>
+                    <span className="text-xs text-gray-500">Настройки</span>
+                  </Link>
+                )}
               </div>
             </CardContent>
           </Card>

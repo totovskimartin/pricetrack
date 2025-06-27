@@ -1,0 +1,27 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient-16" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rounded rectangle -->
+  <rect width="16" height="16" rx="3" ry="3" fill="url(#bg-gradient-16)"/>
+  
+  <!-- Price chart line -->
+  <path d="M3 11 Q5 9 6 10 Q8 8 10 7 Q12 5 13 6" 
+        stroke="white" 
+        stroke-width="1.25" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"/>
+  
+  <!-- Data points -->
+  <circle cx="3" cy="11" r="0.75" fill="white"/>
+  <circle cx="6" cy="10" r="0.75" fill="white"/>
+  <circle cx="10" cy="7" r="0.75" fill="white"/>
+  <circle cx="13" cy="6" r="0.75" fill="white"/>
+  
+  
+</svg>

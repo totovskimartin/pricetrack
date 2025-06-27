@@ -220,7 +220,7 @@ export default function ContactPage() {
                     </a>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
+                {/* <div className="flex items-center space-x-3">
                   <Phone className="h-5 w-5 text-green-500" />
                   <div>
                     <p className="font-medium">Телефон</p>
@@ -231,8 +231,8 @@ export default function ContactPage() {
                       +359 888 123 456
                     </a>
                   </div>
-                </div>
-                <div className="flex items-start space-x-3">
+                </div> */}
+                {/* <div className="flex items-start space-x-3">
                   <MapPin className="h-5 w-5 text-red-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Адрес</p>
@@ -241,7 +241,7 @@ export default function ContactPage() {
                       София 1000, България
                     </p>
                   </div>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 

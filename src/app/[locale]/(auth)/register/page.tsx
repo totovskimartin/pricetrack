@@ -364,8 +364,12 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <BarChart3 className="h-7 w-7 text-white" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
+              <img
+                src="/favicon.svg"
+                alt="PriceTrack Logo"
+                className="w-12 h-12"
+              />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">PriceTrack</h1>

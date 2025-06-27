@@ -1,0 +1,28 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient-192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rounded rectangle -->
+  <rect width="192" height="192" rx="30" ry="30" fill="url(#bg-gradient-192)"/>
+  
+  <!-- Price chart line -->
+  <path d="M36 132 Q60 108 72 120 Q96 96 120 84 Q144 60 156 72" 
+        stroke="white" 
+        stroke-width="15" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"/>
+  
+  <!-- Data points -->
+  <circle cx="36" cy="132" r="9" fill="white"/>
+  <circle cx="72" cy="120" r="9" fill="white"/>
+  <circle cx="120" cy="84" r="9" fill="white"/>
+  <circle cx="156" cy="72" r="9" fill="white"/>
+  
+  <!-- Upward arrow -->
+  <path d="M132 48 L156 48 L144 30 Z" fill="white"/>
+</svg>

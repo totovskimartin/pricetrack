@@ -33,8 +33,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <BarChart3 className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+                <img
+                  src="/favicon.svg"
+                  alt="PriceTrack Logo"
+                  className="w-10 h-10"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
@@ -137,12 +141,12 @@ export default function HomePage() {
                     <TrendingUp className="h-6 w-6 text-white" />
                   </div>
                   <CardTitle className="text-white text-xl">
-                    Автоматично Проследяване
+                    Ценово Проследяване
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-gray-300 leading-relaxed">
-                    Системата следи цените 24/7 и ви уведомява за най-добрите оферти в реално време.
+                    Следим цените и ви уведомяваме за най-добрите оферти в реално време.
                   </CardDescription>
                 </CardContent>
               </Card>

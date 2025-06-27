@@ -16,8 +16,26 @@ export async function GET() {
     "categories": ["shopping", "lifestyle", "productivity"],
     "icons": [
       {
-        "src": "/next.svg",
+        "src": "/favicon.svg",
         "sizes": "any",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      },
+      {
+        "src": "/android-chrome-192x192.svg",
+        "sizes": "192x192",
+        "type": "image/svg+xml",
+        "purpose": "maskable any"
+      },
+      {
+        "src": "/android-chrome-512x512.svg",
+        "sizes": "512x512",
+        "type": "image/svg+xml",
+        "purpose": "maskable any"
+      },
+      {
+        "src": "/apple-touch-icon.svg",
+        "sizes": "180x180",
         "type": "image/svg+xml"
       }
     ],
@@ -29,8 +47,9 @@ export async function GET() {
         "url": "/bg/products",
         "icons": [
           {
-            "src": "/next.svg",
-            "sizes": "any"
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
           }
         ]
       },
@@ -41,8 +60,9 @@ export async function GET() {
         "url": "/bg/discussions",
         "icons": [
           {
-            "src": "/next.svg",
-            "sizes": "any"
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
           }
         ]
       }

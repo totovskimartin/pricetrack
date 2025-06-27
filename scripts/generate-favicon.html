@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favicon Generator for PriceTrack</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            border-radius: 4px;
+        }
+        .size-group {
+            margin: 20px 0;
+        }
+        .download-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .download-btn:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PriceTrack Favicon Generator</h1>
+        <p>Generating favicons with a price chart/trending design...</p>
+        
+        <div class="size-group">
+            <h3>16x16 (Standard Favicon)</h3>
+            <canvas id="favicon16" width="16" height="16"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon16', 'favicon-16x16.png')">Download 16x16</button>
+        </div>
+        
+        <div class="size-group">
+            <h3>32x32 (High DPI)</h3>
+            <canvas id="favicon32" width="32" height="32"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon32', 'favicon-32x32.png')">Download 32x32</button>
+        </div>
+        
+        <div class="size-group">
+            <h3>48x48 (Windows)</h3>
+            <canvas id="favicon48" width="48" height="48"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon48', 'favicon-48x48.png')">Download 48x48</button>
+        </div>
+        
+        <div class="size-group">
+            <h3>180x180 (Apple Touch Icon)</h3>
+            <canvas id="favicon180" width="180" height="180"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon180', 'apple-touch-icon.png')">Download 180x180</button>
+        </div>
+        
+        <div class="size-group">
+            <h3>192x192 (Android)</h3>
+            <canvas id="favicon192" width="192" height="192"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon192', 'android-chrome-192x192.png')">Download 192x192</button>
+        </div>
+        
+        <div class="size-group">
+            <h3>512x512 (Android Large)</h3>
+            <canvas id="favicon512" width="512" height="512"></canvas>
+            <button class="download-btn" onclick="downloadCanvas('favicon512', 'android-chrome-512x512.png')">Download 512x512</button>
+        </div>
+        
+        <button class="download-btn" onclick="downloadAll()" style="background: #059669; font-size: 16px; padding: 12px 24px;">Download All Sizes</button>
+    </div>
+
+    <script>
+        function drawFavicon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 32; // Base design on 32x32
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background gradient (blue to indigo)
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3b82f6'); // Blue
+            gradient.addColorStop(1, '#6366f1'); // Indigo
+            
+            // Draw rounded rectangle background
+            const radius = size * 0.15;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fill();
+            
+            // Draw price chart/trending line
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(1, size * 0.08);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            const padding = size * 0.2;
+            const chartWidth = size - (padding * 2);
+            const chartHeight = size * 0.4;
+            const startY = size * 0.7;
+            
+            // Create a trending upward line with some variation
+            const points = [
+                { x: padding, y: startY },
+                { x: padding + chartWidth * 0.25, y: startY - chartHeight * 0.3 },
+                { x: padding + chartWidth * 0.5, y: startY - chartHeight * 0.1 },
+                { x: padding + chartWidth * 0.75, y: startY - chartHeight * 0.8 },
+                { x: padding + chartWidth, y: startY - chartHeight * 0.6 }
+            ];
+            
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            
+            // Draw smooth curve through points
+            for (let i = 1; i < points.length; i++) {
+                const prevPoint = points[i - 1];
+                const currentPoint = points[i];
+                const nextPoint = points[i + 1];
+                
+                if (nextPoint) {
+                    const cpx = currentPoint.x;
+                    const cpy = currentPoint.y;
+                    ctx.quadraticCurveTo(cpx, cpy, (currentPoint.x + nextPoint.x) / 2, (currentPoint.y + nextPoint.y) / 2);
+                } else {
+                    ctx.lineTo(currentPoint.x, currentPoint.y);
+                }
+            }
+            ctx.stroke();
+            
+            // Add small dots at key points
+            ctx.fillStyle = '#ffffff';
+            const dotRadius = Math.max(1, size * 0.04);
+            points.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, dotRadius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Add a small upward arrow to indicate growth/tracking
+            if (size >= 32) {
+                const arrowSize = size * 0.15;
+                const arrowX = size - padding - arrowSize;
+                const arrowY = padding + arrowSize;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX + arrowSize, arrowY);
+                ctx.lineTo(arrowX + arrowSize * 0.5, arrowY - arrowSize);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        function downloadAll() {
+            const sizes = [
+                { id: 'favicon16', name: 'favicon-16x16.png' },
+                { id: 'favicon32', name: 'favicon-32x32.png' },
+                { id: 'favicon48', name: 'favicon-48x48.png' },
+                { id: 'favicon180', name: 'apple-touch-icon.png' },
+                { id: 'favicon192', name: 'android-chrome-192x192.png' },
+                { id: 'favicon512', name: 'android-chrome-512x512.png' }
+            ];
+            
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    downloadCanvas(size.id, size.name);
+                }, index * 200); // Stagger downloads
+            });
+        }
+        
+        // Generate all favicons when page loads
+        window.onload = function() {
+            drawFavicon(document.getElementById('favicon16'), 16);
+            drawFavicon(document.getElementById('favicon32'), 32);
+            drawFavicon(document.getElementById('favicon48'), 48);
+            drawFavicon(document.getElementById('favicon180'), 180);
+            drawFavicon(document.getElementById('favicon192'), 192);
+            drawFavicon(document.getElementById('favicon512'), 512);
+        };
+    </script>
+</body>
+</html>

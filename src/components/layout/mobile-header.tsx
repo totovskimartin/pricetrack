@@ -40,8 +40,12 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
           href="/bg/dashboard"
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity flex-1 justify-center"
         >
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-            <BarChart3 className="h-5 w-5 text-white" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
+            <img
+              src="/favicon.svg"
+              alt="PriceTrack Logo"
+              className="w-8 h-8"
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-bold text-foreground leading-tight">PriceTrack</span>
